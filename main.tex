@@ -199,6 +199,21 @@ To formalize this we can look at the below representation
 \end{gather*}
 We can see applications of this in fields such as: NLP\footnote{Natural Language Processign}, PPM\footnote{Probabilistic Password Models} etc...
 \pagebreak
+\section{Cython}
+Cython ( not to be confused with CPython ) is a compiled programming language that is used to write c/c++ extensions for python very easy.
+The following explains the typical workflow: 
+  We first define preprocessing options that are read by the compiler with \# like in c 
+  this will tell the compiler how to translate the code in c/c++ and then how to write the bindings,
+  we then start writing the code in a python style syntax.
+  \subsection{Cython functions}
+    Cython has 3 types of functions declarators: 
+    \begin{itemize}
+      \item cdef this will tell the compiler to write a c-only equivalent, we cannot use any python structures, functions inside of these only code which can be directly translated to c we can turn off the \href{https://wiki.python.org/moin/GlobalInterpreterLock}{GIL} for all of the function at the definiton e.g.(cdef void my\_func() nogil:).
+      \item cpdef this will be used to call c functions and is available to call in python, we can also use python functions and libraries inside of these we can also turn off the GIL with the python keyword WITH.
+      \item def this are standard python functions which cannot access cdef functions directly.
+    \end{itemize}
+  This will allow us to write performance heavy loops in cdef functions and we can call them in cpdef functions to maximize the code simplicity.
+
 \section{Recurrent Neural Networks(RNN)}
 Models that have 3 layers\footnote{This is a simplification \cite{ref:rnnlstm}}: 
 
@@ -378,8 +393,9 @@ The first proposed solution was to build a \href{https://github.com/BobTheBot988
 The main problem with this approach is the fact that like in pure python, each heap item is an object that must be tracked by python's \href{https://docs.python.org/3/library/gc.html}{garbage collector}, nevertheless this approach helped us reduce memory consumption by $\sim59.79\%$ instead of the pure python approach as seen in Figure \ref{fig:1}, alas further optimization was necessary, so we opted for a custom heap called \href{https://github.com/BobTheBot988/heapcy/tree/main}{heapcy}.
 
 Using Cython allows us to replace Python objects with C-structured
-objects giving us improved memory usage.
-These objects:
+objects giving us improved memory usage while also giving us ease of integration in python, we could have used c++ and then have written the integrations with \href{https://nanobind.readthedocs.io/en/latest/}{nanobind}, but that would have taken considerably more time and the fast software distribution would have been more complicated.
+Since we use cython we have access to \href{https://github.com/pypa/cibuildwheel}{cibuildwheel} which when integrated with github CI/CD allows us to publish binaries to pypy rendering software distribution really easy.
+These Cython objects:
 \begin{itemize}
   \item are allocated in contiguous memory,
   \item avoid Python reference counting,
@@ -443,11 +459,14 @@ The standard way to get the guessing percentage of a model is the empirical way:
 \textbf{Eq.} Empirical guess number for a given x. 
 \begin{equation}
 \label{eq:1}
-G_{\text{emp}}(x) = \frac{|\mathcal{G}_x \cap \mathcal{T}|}{|\mathcal{T}|}   
+G(x) = \frac{|\mathcal{G}_x \cap \mathcal{T}|}{|\mathcal{T}|}   
 \end{equation}
+\begin{itemize}
+  \item $\mathcal{G}_x$ is the set containing the top-x sampling,
+  \item $\mathcal{T}$ is the test-dataset containing all of the strings in the test-dataset.
+\end{itemize}
 
-
-This will give us the real percentage as seen in \ref{tab:2} last column and it will tell us how good the model is in reality.
+This division give us the real ratio of how many passwords of the test-dataset where guessed which can be seen as a percentage in \ref{tab:2} last column.
 The former approach was very slow, we needed to find another way to reach a good enough solution.
 
 \subsection{Estimation with Monte Carlo}

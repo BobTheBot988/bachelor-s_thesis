@@ -323,6 +323,7 @@ INPUT /usr/share/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm10.tfm
 INPUT /usr/share/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc
 INPUT /usr/share/texmf-dist/fonts/tfm/public/lm/ec-lmr12.tfm
 INPUT /usr/share/texmf-dist/fonts/tfm/public/lm/ec-lmbx12.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/public/lm/ts1-lmr10.tfm
 INPUT /usr/share/texmf-dist/tex/latex/doublestroke/Udsrom.fd
 INPUT /usr/share/texmf-dist/tex/latex/doublestroke/Udsrom.fd
 INPUT /usr/share/texmf-dist/tex/latex/doublestroke/Udsrom.fd
@@ -334,7 +335,6 @@ INPUT /usr/share/texmf-dist/fonts/tfm/public/doublestroke/dsrom8.tfm
 INPUT /usr/share/texmf-dist/fonts/tfm/public/lm/rm-lmbx10.tfm
 INPUT /usr/share/texmf-dist/fonts/tfm/public/lm/rm-lmbx8.tfm
 INPUT /usr/share/texmf-dist/fonts/tfm/public/lm/rm-lmbx6.tfm
-INPUT /usr/share/texmf-dist/fonts/tfm/public/lm/ts1-lmr10.tfm
 INPUT /usr/share/texmf-dist/fonts/tfm/public/lm/rm-lmbx9.tfm
 INPUT /usr/share/texmf-dist/fonts/tfm/public/lm/rm-lmbx5.tfm
 INPUT /usr/share/texmf-dist/fonts/tfm/public/lm/ec-lmri10.tfm
