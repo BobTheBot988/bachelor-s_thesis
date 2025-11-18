@@ -124,7 +124,10 @@
 
 \mainmatter
 \chapter{Introduction}
-\lettrine[lines=2, findent=3pt, nindent=0pt]{I}{}n the field of probabilistic  Password-guessing models...
+\lettrine[lines=2, findent=3pt, nindent=0pt]{I}{}n the field of probabilistic  Password-guessing models there is a big problem, we take a long time to evaluate a passwords rank and a model. 
+This is important since we want to give the maximum security possible to services relying on passwords(e.g. a website), and to do that we need fast and accurate password rank evaluation.
+We must address these because if not then the security of many services would be left compromised by this kind of attacks which rely on PGMs.
+
 \textbf{This thesis makes the following contributions:}
 
 \begin{enumerate}
@@ -148,7 +151,7 @@ However, computing password ranks is computationally expensive.
 For this reason, modern frameworks rely on Monte Carlo estimation \cite{ref:dellamico}, which approximates password rank using samples drawn from the model’s distribution in an i.i.d manner.
 Monte Carlo estimation is effective, but it places a heavy computational burden on sampling, since millions of samples are required for stable accuracy.
 
-This is particularly critical for models such as Fast, Lean and Accurate (FLA), whose primary strength is client-side efficiency.
+This is critical for models such as Fast, Lean and Accurate (FLA), whose primary strength is client-side efficiency.
 FLA is specifically designed to run on low-resource devices, meaning that memory usage and sampling performance become decisive factors.
 The original implementation inside MAYA, while correct, suffers from two limitations:
 
@@ -184,6 +187,7 @@ Let us say that we do not know the probability of a coin toss, we can use Monte 
 \end{gather*}
      As shown in the formula, above and according to the weak law of large numbers \footnote{The weak law of large numbers states that an observed sample average from a sample will be closer to the true population average as the sample grows larger. \cite{ref:loeve}}
      $$\displaystyle\Large \lim_{n\rightarrow\infty} \frac{1}{n} \sum_{i=1}^{n}X_i = 0.5$$
+
 \section{Markov Chains}
 Markov chains give us a framework through which we can model sequential events it works like this:
 we have a set of states for each state we have associated a probability distribution of going to another, that can be easily represented with a matrix.
@@ -280,9 +284,11 @@ we can now find out the rank of a given password $\alpha$.
 \end{equation}
 
 This will give us the rank of a password or more simply the amount of attempts it would take to guess it, the main problem from this approach is its data intensivity the set of strings can be really big, so to be faster we need to use Monte Carlo's estimation\ref{sec:montecarlo},
-we start by defining a set $\Theta$, it will contain a sample of strings taken from a i.i.d.\footnote{Indepently,Identically Distributed} distribution $\Psi$ based on the internal one of the model.
+we start by defining a set $\Theta$, it will contain a sample of strings taken from a i.i.d.\footnote{Indepently,Identically Distributed we need this because if the distribution is not iid therefore we will not be able to get accurate estimates} distribution $\Psi$ based on the internal one of the model.
+Furthermore the larger the size of $\Theta$ the better the estimation as proved in \cite{ref:dellamico}, this will help us especially with Low-probability passwords since they have higher variance. 
+In this paper we implemented the version found in \cite{ref:dellamico} without any improvements as seen in \cite{ref:stanek} this has not impacted on the performance of the guess\% estimation.
+To this day we have not found a way to better this variance, the latest attempts have yielded some results in lowering the variance therefore making montecarlo more accurate especially for Low-probability passwords, but they are not good enough yet.
 We can now Estimate the \textbf{Rank}, we define $\hat{R}(\alpha)$ as the estimation of the Rank for a given password $\alpha$:
-
 \begin{equation}
 \hat{R}_\Psi(\alpha) = \hat{\mathbb{E}}_{\beta\sim \Psi}\Bigg[\frac{  \mathds{1} [p(\beta) > p(\alpha)]}{p(\beta)}\Bigg] = \frac{1}{n}\sum_{\beta \in \Theta }\frac{ \mathds{1}[p(\beta) > p(\alpha)]}{p(\beta)} \cite{ref:dellamico}
 \label{eq:estimaterank}
@@ -353,23 +359,66 @@ Solution 2: Write all the heap in Cython and do not store any strings.
 The first problem we tackled was the original implementation of FLA's sampling algorithm\cite{ref:fla}, which occupied a significant memory usage due to the usage of pure Python structures such as lists, tuples, strings, and floats.
 The main problem came from the fact that each item was saved as a tuple of str, float, which was appended into a list, and that list was manipulated with the \href{https://docs.python.org/3/library/heapq.html}{heapq} module.
 Figure \ref{fig:1} illustrates the significant memory consumption caused by the original technique.
+Python heap structures store each heap item as a fully-fledged Python object
+(tuple of string and float). This leads to high memory overhead due to:
+\begin{enumerate}
+  \item object headers,
+  \item reference counting,
+  \item heap fragmentation,
+  \item garbage collector metadata,
+  \item repeated storage of identical strings.
+\end{enumerate}
+
+As a result, storing $10^6$ heap entries may require hundreds of megabytes,
+when combined with all of the other objects we keep in memory this results in really big memory usage in the magnitude of 200GBs when sampling $5*10^8$ making it impossible to scale $\Theta$ to the sizes required for big model Evaluation.
 
 \subsection{Heap-item}
 \label{heapitem}
 The first proposed solution was to build a \href{https://github.com/BobTheBot988/heap-item}{heap-item} custom module written in Cython thus maximizing performance and compatibility with Python.
 The main problem with this approach is the fact that like in pure python, each heap item is an object that must be tracked by python's \href{https://docs.python.org/3/library/gc.html}{garbage collector}, nevertheless this approach helped us reduce memory consumption by $\sim59.79\%$ instead of the pure python approach as seen in Figure \ref{fig:1}, alas further optimization was necessary, so we opted for a custom heap called \href{https://github.com/BobTheBot988/heapcy/tree/main}{heapcy}.
-\pagebreak
+
+Using Cython allows us to replace Python objects with C-structured
+objects giving us improved memory usage.
+These objects:
+\begin{itemize}
+  \item are allocated in contiguous memory,
+  \item avoid Python reference counting,
+  \item do not trigger garbage collection,
+  \item store fields compactly (the struct is made using chars and doubles which is much smaller than normal python strings, and floats)
+\end{itemize}
+
+This reduces per-item memory usage tremendously. However, each item is still
+an python object, so total memory still scales linearly with the number of stored items.
 \subsection{Custom-heap}
+
 \label{customheap}
 Rather than simply implementing a heap in Cython, we adopted a different approach by storing only the string's position in a file as a reference. This method significantly reduced memory usage, as shown in Figure \ref{fig:1}, and required only a single heap object instead of multiple instances as in previous implementations \ref{PurePython} and \ref{heapitem}.
 This approach has given us an improvement of $\sim87.47\%$ over \ref{PurePython} and a $\sim68.85\%$ over \ref{heapitem}
 While this solution offers superior performance, it is more complex to use compared to the previous solutions, so the choice should depend on the specific requirements of your situation.
 
+Since we don't actually need strings in memory during the sampling process, we can just 
+write a  password once to a binary file, and the heap
+can store only its integer file offset together with the probability value.
+
+This design:
+\begin{itemize}
+  \item avoids storing millions of Python strings,
+  \item eliminates repeated allocations,
+  \item stores heap entries as compact C structs,
+  \item ensures that the heap consists of a single contiguous memory region,
+\end{itemize}
+
+The tradeoff is increased implementation complexity and the need for careful
+file handling, but the performance benefit is decisive.
 
 \chapter{Experimental Setup}
 \label{chap:5}
 \section{Dataset}
 For this paper we chose the \href{https://drive.google.com/file/d/1XEsAf99H3DmH4ichbH-4yXkb0mSwoADY/view?usp=sharing}{RockYou} dataset the same as in MAYA \cite{ref:maya}(split 80;20), for time reasons we couldn't test with other datasets.
+RockYou is the standard dataset used in nearly all password-guessing literature.
+Using it ensures comparability with previous work and aligns with the datasets
+used by MAYA and FLA. Its size and structure also provide statistically meaningful
+evaluation for both trawling and targeted password-guessing attacks.
 \section{Model and Training}
 As discussed, there was no time to implement the functions required to test with other models.
 Model wise we used FLA found in MAYA\cite{ref:maya}, and optimized as said in \ref{sec:Opt}. The passwords were generated with a maximum length of 12 characters, the model was pre-trained in the RockYou dataset and as a test-config we used \href{https://github.com/williamcorrias/MAYA-Password-Benchmarking/blob/master/config/test/rq1.yaml}{rq1}.
@@ -945,8 +994,16 @@ key result (MC reliable up to $5.0\cdot10^8$)
 implication
 future work
 \label{chap:7}
-In this thesis we evidenced how employing Monte Carlo's methods for the estimation of guess-estimates works up to $5.0\cdot10^8$ more than the implementation in \cite{ref:fla}, since the results are so close to the deterministic one we believe this may  indicate that it can be used to estimate the guess rate for even more passwords, for best accuracy we recommend using $10^6$ but if you don't have the compute power you can also use $10^4$ for a more rough but accurate enough estimation.
-For future works we could implement this for the other models in MAYA, and push the number of guesses even further(e.g.$1.0\cdot10^9,2.5\cdot10^9$)
+In Conclusion we managed to optimize the sampling of FLA, added montecarlo to MAYA and we proved with results how the montecarlo estimation is very good at estimating the evaluation.
+We went beyond FLAs original paper by proving the result up to $5.0 \cdot 10^8$ this may imply that we do not need to the evaluation the good old way, by using enumeration, instead we can use montecarlo to see how good a model really is.
+Being able to extend Monte Carlo sampling to $|\Theta| = 5\cdot10^8$ is 
+important, since the accuracy of it is entirely dependent on the size of $|\Theta|$ 
+The larger the sample size the smaller the variance in the tail of the distribution(Low probability passwords), which is where many
+real passwords reside. Our optimizations therefore enable a  better evaluation of password-guessing models without requiring 
+enormous amounts of memory usage.
+In future works we should expand this method to every model implemented inside of MAYA, and try montecarlo for even larger numbers, since the new optimization allows us to enumerate up to even bigger numbers without encurring into big performance issues.
+We should as well optimize the caching part \ref{algo:gen_sorted}, since for now it is all sequential and takes a considerable amount of time $\sim 4hr$ for RockYou test-dataset $\sim 4.0*10^6$ passwords.
+We could also improve the heapcy implementation to have a dynamic memory instead of the current implementation.
 \chapter{Appendix}
 \appendix
 \section{UML}

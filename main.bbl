@@ -31,6 +31,12 @@
 \newblock \emph{Information}, \textbf{15} (2024).
 \newblock Available from: \url{https://www.mdpi.com/2078-2489/15/9/517}.
 
+\bibitem{ref:stanek}
+\textsc{Stanek, M.}
+\newblock Revisiting monte carlo strength evaluation.
+\newblock \emph{arXiv preprint arXiv:2408.00124},  (2024).
+\newblock Available from: \url{https://arxiv.org/abs/2408.00124v1}, \href {http://arxiv.org/abs/2408.00124} {\path{arXiv:2408.00124}}.
+
 \bibitem{ref:rfguess}
 \textsc{Wang, D., Zou, Y., Zhang, Z., and Xiu, K.}
 \newblock Password guessing using random forest.
