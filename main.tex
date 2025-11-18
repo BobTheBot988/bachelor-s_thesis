@@ -8,6 +8,7 @@
 %\usepackage[italian]{babel} %use this package for a thesis written in Italian
 \usepackage[utf8]{inputenc}
 \usepackage{indentfirst}
+\usepackage{dsfont}
 \usepackage{microtype}
 \usepackage{colortbl}
 \usepackage[table]{xcolor}
@@ -134,11 +135,13 @@
 
 \chapter{Motivation}
 \label{chap:2}
-
+We started working on the Monte Carlo estimation for FLA in MAYA\cite{ref:maya} with the assumption that it would not work after the confirmed number in \cite{ref:fla}.
+We also needed to optimize the sampling for the evaluation so that it could be run on more machines,
 \section{}
 \chapter{Background and Related Work}
 \label{chap:3} 
 \section{Monte Carlo Estimation}
+\label{sec:montecarlo}
 Given an analytically complex problem to solve, using the Monte Carlo estimation will give us a value close enough to the real solution, even though it is much more simple analytically speaking.
 If we take a sample of n items from the main problem, we then perform a sum over the values then divide at the end with $\#samples$.
  This will give us an approximation of the expected value of our original problem.
@@ -195,11 +198,25 @@ This  is an evolution of RNN's which mitigates the vanishing gradient problem by
 \end{enumerate}
 Each of these tell the model how much of the previous, input,hidden, and output states to consider from the previous state.
 Even though we have this improvement over the base model, this is still not perfect as the vanishing can still occur, nevertheless it is better than the normal one\cite{ref:rnnlstm}.
+\subsection{Binary Search}
+\label{sec:binserach}
+Searching algorithm that runs in $O(log_2n)$, it works on an sorted iterable like a list, tuple, etc...
+example: 
+Let us play the guessing game, I want you to guess the number I am thinking of, this number is $n \in \mathds{N} 0\leq n\leq100$ and you start
+"1" and I say higher, 
+"2" and I say higher,
+"3" and I say higher,
+at this point you understand that it can take up to 100 tries or at most $O(n)$
+So you come up with a better idea, you start from the middle, 
+"50" and I say higher,
+"75" and I say higher,
+"100" and I say you guessed correctly.
+As we can see you guessed correctly with just 3 tries, instead of 100, this respects our claim of $O(log_2n)$, we can confidently say that this is a good alogorithm, the problem with it is that everything must be sorted the order does not really matter you just switch the conditions.
 \section{Probabilistic Password Models}
 P.P.Ms are a necessary part of a modern login security system they are needed to evaluate the strength of the user's password,
 since today's attackers also use these models to crack passwords more efficiently.
 When defending they evaluate the strengh of a given password by telling you how many attempts it would take to guess it this is known as the \textbf{ Rank } of a password, the higher the rank the more secure the password.
-Attackers prefer to use these models instead of brute forcing,Brute forcing is a procudure in which we try every possible solution to find it e.g.  "What is Roberto Di Rosa's Gmail password?" \\ 
+Attackers prefer to use these models instead of brute forcing,Brute forcing is a procedure in which we try every possible password to find the correct one e.g.  "What is Roberto Di Rosa's Gmail password?" \\ 
 Let's assume he used only characters from the english alphabet and that the password has a maximum length of 12 characters, so we know that there are 26 characters in the english alphabet let's start by the first:
  \begin{enumerate}
   \item a
@@ -216,13 +233,31 @@ We could use optimized versions like \href{https://www.openwall.com/john/}{ John
 These probabilistic models instead rely on something else, after training we take all of the tuples of 
 \begin{enumerate}
   \item password
-  \item passoword's probability
+  \item password's probability
 \end{enumerate}
 and put them inside of a set $\Gamma$, \footnote{If the model we are working with is implicit, we don't have access to any distribution, therefore at first it's impossible}
-we can now find out 
+we can now find out the rank of a given password $\alpha$.
 \begin{equation}
-
+  R(\alpha) = |\{\beta \mid \beta,p_\beta \in \Gamma \wedge p_\beta > p(\alpha) \}|
+  \label{eq:fullrank}
 \end{equation}
+This will give us the rank of a password or more simply the amount of attempts it would take to guess it, the main problem from this approach is its data intensivity the set of strings can be really big, so to be faster we need to use Monte Carlo's estimation\ref{sec:montecarlo},
+we start by defining a set $\Theta$, it will contain a sample of strings taken from a i.i.d.\footnote{Indepently,Identically Distributed} distribution $\Psi$ based on the internal one of the model.
+We can now Estimate the \textbf{rank}, we define $\hat{R}(\alpha)$ as the estimation of the Rank for a given password $\alpha$:
+\begin{equation}
+\hat{R}_\Psi(\alpha) = \hat{\mathbb{E}}_{\beta\sim \Psi}\Bigg[\frac{  \mathds{1} [p(\beta) > p(\alpha)]}{p(\beta)}\Bigg] = \frac{1}{n}\sum_{\beta \in \Theta }\frac{ \mathds{1}[p(\beta) > p(\alpha)]}{p(\beta)} \cite{ref:dellamico}
+  \label{eq:estimaterank}
+\end{equation}
+This is a good estimation but if we need to estimate a lot of passwords, this will not be fast since each time we need to sample for montecarlo and calculate the rank, so the solution is to precalculate the rank and samples so that we do not need to do it multiple times,
+so let A be the descending sorted array of probabilities for getting generated by the model for each sampled password, 
+and let C be the array of  the estimated ranks for each password.
+\begin{align*}
+\label{eq:optestimaterank}  
+\text{Let } \mathbf{A} = [p(\beta_0),p(\beta_1)\dots,p(\beta_n-1)]\\
+\text{Let } \mathbf{C}[i] = \frac{1}{n}\sum_{j=0}^i-1 \frac{1}{A[j]} = C[i-1] + \frac{1}{n\cdot A[i]}  
+\end{align*}
+So given a password $\alpha$ to find its rank given A and C, we just need to reverse binary search \ref{sec:binserach} in A so that we find the index $i$ of the probability which is higher than $p(\alpha)$,
+We than take the value stored at $C[i]$ which will be the $\hat{R}(\alpha)$, so we found our solution really fast.
 They work by getting trained on a dataset(e.g. RockYou,Libero,TaoBao,etc...), from these datasets they will take the most frequent passwords and they will create distributions for these passwords in a way as to reflect the frequency of characters,
 all of this using one of these RNN's,Markov chains, PCFGs,LSTMS,Random Forests\cite{ref:rfguess},
 They can be separated into 2 types:
@@ -241,7 +276,7 @@ As evidenced in \cite{ref:fla} the model is very good at guessing passwords comp
 Although in recent years there has been a development in to password guessing, as in the emergence of new kinds of model like: RFGuess \cite{ref:rfguess}, PASS LLM \cite{ref:pwdguessllm} etc...
 The authors of FLA have done an excellent job at making it very "lean" so that it can  run easily on the client side, making it a really good model for password strength metering on the client-side which was a novel idea at the time.
 They also used Monte Carlo estimation\cite{ref:dellamico} to efficiently look at how many guesses it would take to guess all of the test dataset \cite{ref:fla}, and proved reliability up to $10^7$.
-\subsection{Modern }
+\subsection{Modern}
 \subsubsection{Password Guessing With LLMs}
 As seen in \cite{ref:pwdguessllm} they brought forward the concept of using LLMs for password guessing and obtained really good results in the evaluation of guesses.
 These LLMs can get to higher guessing numbers much faster than previous implementations, instead of 
@@ -396,7 +431,7 @@ def montecarlo_test(
         \renewcommand{\thefigure}{\arabic{figure}} % Removes the chapter prefix (e.g., "5.")
     \setcounter{figure}{0}      
      \includegraphics[width=0.8\linewidth]{img/benchmark-1000000.png}
-     \caption{Memory Usage, of each implementation with $10^6$ items}
+     \caption{Memory usage of the three heap implementations when storing $10^6$ items.}
      \label{fig:1}
  \end{figure}
 \begin{figure}[h!tbp]
@@ -463,7 +498,7 @@ def montecarlo_test(
          \midrule
          \rowcolor{lightgray}
          $10^6$ &  127.72 & 51.36 & 16.00\\
-         $10^5$ & 12.72 & 5.13 & 1.60\\
+         $10^5$ & 12.77 & 5.13 & 1.60\\
          \bottomrule
     \end{tabular}
     \caption{Size occupied in MB}
