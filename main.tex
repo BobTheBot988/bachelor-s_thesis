@@ -40,6 +40,8 @@
 \usepackage{xcolor}
 \usepackage{amsfonts}
 \usepackage{amsmath}
+\usepackage{amssymb} % Added for \varnothing and \mathcal
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
 \usepackage[hidelinks]{hyperref}
 \usepackage[nameinlink]{cleveref}
 \usepackage{placeins}
@@ -135,9 +137,39 @@
 
 \chapter{Motivation}
 \label{chap:2}
-We started working on the Monte Carlo estimation for FLA in MAYA\cite{ref:maya} with the assumption that it would not work after the confirmed number in \cite{ref:fla}.
-We also needed to optimize the sampling for the evaluation so that it could be run on more machines,
-\section{}
+Human-chosen passwords today face a grave danger since malicious actors have devoleped new methods, based on Password-guessing Models.
+We need to understand how these attackers prioritize guesses and how many attempts are needed to break a password using this "novel" models.
+
+Therefore we developed Password-guessing Models of our own to study and to evaluate the strength of a passoword.
+They assign a probability to each password and, by ranking passwords in decreasing probability order, they allow us to approximate how quickly an adversary could guess them.
+This rank is the foundation of virtually all password-strength meters, risk assessments, and password-policy design.
+
+However, computing password ranks is computationally expensive.
+For this reason, modern frameworks rely on Monte Carlo estimation \cite{ref:dellamico}, which approximates password rank using samples drawn from the model’s distribution in an i.i.d manner.
+Monte Carlo estimation is effective, but it places a heavy computational burden on sampling, since millions of samples are required for stable accuracy.
+
+This is particularly critical for models such as Fast, Lean and Accurate (FLA), whose primary strength is client-side efficiency.
+FLA is specifically designed to run on low-resource devices, meaning that memory usage and sampling performance become decisive factors.
+The original implementation inside MAYA, while correct, suffers from two limitations:
+
+High memory usage, due to Python objects (tuples, strings, floats) stored in a large heap.
+
+These limitations create bottlenecks when evaluating models on large datasets or when computing Monte Carlo estimates for many passwords.
+For example, MAYA requires building a Monte Carlo curve for each checkpoint of each model.
+If sampling is slow or memory-intensive, evaluating large models becomes impractical, and researchers are unable to explore bigger $\Theta$ values or newer model architectures.
+
+The goal of this thesis is to address these limitations by optimizing the sampling process at the core of FLA-based Monte Carlo estimation, and to see if montecarlo estimation for the evaluation of a model keeps up after $10^7$ as previously proved by \cite{ref:fla}.
+We introduce two new heap-based sampling implementations:
+
+heap-item, a Cython-optimized drop-in replacement for Python heap items, reducing memory usage while keeping compatibility.
+
+heapcy, a fully custom Cython heap storing only integer references to string positions, achieving substantial memory reduction.
+
+These improvements are not merely engineering optimizations.
+They directly enable MAYA to scale to larger sample sizes, evaluate more complex models, and compute Monte Carlo estimates more efficiently.
+By reducing memory consumption by up to 87\%, our work makes Monte Carlo-based password evaluation faster, more accurate, and more accessible on standard hardware.
+
+This allowed us to push the topk sampler to $5*10^8$ and prove that the Monte Carlo Estimation keeps up.
 \chapter{Background and Related Work}
 \label{chap:3} 
 \section{Monte Carlo Estimation}
@@ -146,9 +178,9 @@ Given an analytically complex problem to solve, using the Monte Carlo estimation
 If we take a sample of n items from the main problem, we then perform a sum over the values then divide at the end with $\#samples$.
  This will give us an approximation of the expected value of our original problem.
 Let us say that we do not know the probability of a coin toss, we can use Monte Carlo to estimate this probability:
-      \begin{gather*}
+  \begin{gather*}
   \text{Given a Bernoulli random variable } X \in \{0,1\} \\
-  \hat{p}= \frac{1}{n}\sum_{i=1}^{n}X_i
+  \hat{p}= \frac{1}{n}\sum_{i=0}^{n-1}X_i
 \end{gather*}
      As shown in the formula, above and according to the weak law of large numbers \footnote{The weak law of large numbers states that an observed sample average from a sample will be closer to the true population average as the sample grows larger. \cite{ref:loeve}}
      $$\displaystyle\Large \lim_{n\rightarrow\infty} \frac{1}{n} \sum_{i=1}^{n}X_i = 0.5$$
@@ -196,6 +228,7 @@ This  is an evolution of RNN's which mitigates the vanishing gradient problem by
     \item forget
     \item output
 \end{enumerate}
+
 Each of these tell the model how much of the previous, input,hidden, and output states to consider from the previous state.
 Even though we have this improvement over the base model, this is still not perfect as the vanishing can still occur, nevertheless it is better than the normal one\cite{ref:rnnlstm}.
 \subsection{Binary Search}
@@ -222,45 +255,66 @@ Let's assume he used only characters from the english alphabet and that the pass
   \item a
   \item b
   \item c
-    ... 
-  \item aa 
-  \item ab 
-  \item ac 
+    ...
+  \item aa
+  \item ab
+  \item ac
  \end{enumerate}
+
 We will try until we reach our result, the problem with this approach is that we might have to try:  
 $26^{ 12 } \sim 95.43$ quadrilions times which for any pc is very computationally demanding.
 We could use optimized versions like \href{https://www.openwall.com/john/}{ John The Ripper }, which fasten the  brute forcing job but are still very slow compared to these models.
 These probabilistic models instead rely on something else, after training we take all of the tuples of 
+
 \begin{enumerate}
   \item password
   \item password's probability
 \end{enumerate}
+
 and put them inside of a set $\Gamma$, \footnote{If the model we are working with is implicit, we don't have access to any distribution, therefore at first it's impossible}
 we can now find out the rank of a given password $\alpha$.
+
 \begin{equation}
   R(\alpha) = |\{\beta \mid \beta,p_\beta \in \Gamma \wedge p_\beta > p(\alpha) \}|
   \label{eq:fullrank}
 \end{equation}
+
 This will give us the rank of a password or more simply the amount of attempts it would take to guess it, the main problem from this approach is its data intensivity the set of strings can be really big, so to be faster we need to use Monte Carlo's estimation\ref{sec:montecarlo},
 we start by defining a set $\Theta$, it will contain a sample of strings taken from a i.i.d.\footnote{Indepently,Identically Distributed} distribution $\Psi$ based on the internal one of the model.
-We can now Estimate the \textbf{rank}, we define $\hat{R}(\alpha)$ as the estimation of the Rank for a given password $\alpha$:
+We can now Estimate the \textbf{Rank}, we define $\hat{R}(\alpha)$ as the estimation of the Rank for a given password $\alpha$:
+
 \begin{equation}
 \hat{R}_\Psi(\alpha) = \hat{\mathbb{E}}_{\beta\sim \Psi}\Bigg[\frac{  \mathds{1} [p(\beta) > p(\alpha)]}{p(\beta)}\Bigg] = \frac{1}{n}\sum_{\beta \in \Theta }\frac{ \mathds{1}[p(\beta) > p(\alpha)]}{p(\beta)} \cite{ref:dellamico}
-  \label{eq:estimaterank}
+\label{eq:estimaterank}
 \end{equation}
+
 This is a good estimation but if we need to estimate a lot of passwords, this will not be fast since each time we need to sample for montecarlo and calculate the rank, so the solution is to precalculate the rank and samples so that we do not need to do it multiple times,
 so let A be the descending sorted array of probabilities for getting generated by the model for each sampled password, 
 and let C be the array of  the estimated ranks for each password.
+
 \begin{align*}
-\label{eq:optestimaterank}  
 \text{Let } \mathbf{A} = [p(\beta_0),p(\beta_1)\dots,p(\beta_n-1)]\\
 \text{Let } \mathbf{C}[i] = \frac{1}{n}\sum_{j=0}^i-1 \frac{1}{A[j]} = C[i-1] + \frac{1}{n\cdot A[i]}  
+\label{eq:optestimaterank}
 \end{align*}
+
 So given a password $\alpha$ to find its rank given A and C, we just need to reverse binary search \ref{sec:binserach} in A so that we find the index $i$ of the probability which is higher than $p(\alpha)$,
 We than take the value stored at $C[i]$ which will be the $\hat{R}(\alpha)$, so we found our solution really fast.
-They work by getting trained on a dataset(e.g. RockYou,Libero,TaoBao,etc...), from these datasets they will take the most frequent passwords and they will create distributions for these passwords in a way as to reflect the frequency of characters,
+We measure the efficacy of the model by seeing in how many attempts it takes to guesse its test-dataset completely, the formula to do this is very simple:
+
+\begin{equation}
+  G(x) = \frac{|\mathcal{S}(x) \cap \mathcal{T}|}{|\mathcal{T}|}
+\label{eq:guessratio}
+\end{equation}
+
+$x \in \mathds{N}$ is the number of guesses the model makes,$\mathcal{T}$ is the set of all the test-dataset passwords, 
+$\mathcal{S}(x)$ is the top-x sampling function that gives us the top-x most probable strings to be generated by the model.
+$G(x)$ is the ratio of the intersection between the sample set and the test-dataset,
+
+They work by getting trained on a dataset(e.g. RockYou,Libero,TaoBao,etc...), from these datasets they will take the most frequent passwords and they will create distributions for these passwords in a way as to reflect the frequency of characters
 all of this using one of these RNN's,Markov chains, PCFGs,LSTMS,Random Forests\cite{ref:rfguess},
 They can be separated into 2 types:
+
 \begin{enumerate}
     \item \textbf{ Trawling} are aimed guessing correctly as many passwords as possible\cite{ref:pwdguessllm} and are constrained just by the amount of resources and the number of guesses itself.
     \item \textbf{ Targeted  }are aimed at guessing the password of a single user given some specifics (e.g.: Name,Surname,Sex,Nationality,etc...)
@@ -391,38 +445,383 @@ There are two ways to calculate the Monte Carlo estimation both specified in \ci
 
 \pagebreak
 \section{Implementation Details}
+\subsection{Explanation}
+\subsubsection{get\_theta}
+The implementation for FLA, is very simple we first call the get\_theta function
+inside of which we instantiate a guesser objectm we then call the OneBatchToControlThemAll which will sample in batches from the model distribution calling IIDSampleBatched and then these samples are written to a csv file which is our montecarlo\_sampling or $\Theta$.
 
-\subsection{Code}
-\begin{lstlisting}[style=pythonstyle, caption={Code snippet taken from the model.py file, which represents our montecarlo function.}, label={lst:py:snippet-montecarlo}]
-def montecarlo_test(
-        self, eval_dict: dict, iter: Iterable[Tuple[str, torch.Tensor]]
-    ):
-        mc_result_path = f"/tmp/mc_results_{self.n_samples}.csv"
-        A, C = self._build_mc_curve(eval_dict)
+% --- PART 1: The Orchestrator & The Driver ---
+\begin{algorithm}[H]
+    \SetKwInOut{Input}{Input}
+    \SetKwInOut{Output}{Output}
+    \SetKwFunction{Build}{GuesserBuild}
+    \SetKwFunction{RunBatch}{OneBatchToControlThemAll}
+    \SetKwFunction{Sample}{IIDSampleBatched}
 
-        """ 
-            Searchsorted returns the index immediately left of that insertion point 
-            is the last existing element that compares as "less than" the insertion relation. 
-            Because we inverted with -A, using right=False ensures idx is the first position 
-            where -A >= -target (i.e., A <= target) so idx - 1 is the last position where A > target.
-        """
-        with open(mc_result_path, "wt") as f:
-            w = csv.writer(f)
-            w.writerow(["pwd", "real_rank", "rank_hat", "prob"])
-            for i, (pwd, target) in enumerate(iter):
-                idx = torch.searchsorted(-A, -target, right=False) - 1
-                if idx < 0:
-                    r_hat = torch.scalar_tensor(0, device=A.device)
-                else:
-                    r_hat = C[idx]
-
-                w.writerow((pwd, i, r_hat.item(), target.item()))
-
-\end{lstlisting}
-\begin{lstlisting}[style=pythonstyle,caption={},label={lst:py:snippet-montercalo}]
-
+    % Function 1: The High-Level Wrapper
+    \underline{function GetTheta} $(path, \mathcal{E})$\;
+    \Input{Output directory $path$, Config dictionary $\mathcal{E}$}
     
-\end{lstlisting}
+    \tcp{1. Factory method creates the Guesser object}
+    $guesser \leftarrow$ \Build{$\mathcal{E}$}\;
+    
+    \tcp{2. The object executes the batch processing}
+    $N \leftarrow \text{self}.n\_samples$\;
+    $guesser$.\RunBatch{$N$, \textbf{true}, $path$}\;
+    \BlankLine
+    \hrule
+    \BlankLine
+
+    % Function 2: The Batch Driver
+    \underline{function OneBatchToControlThemAll} $(n, path)$\;
+    \Input{Total samples $n$, Output path $path$}
+    
+    $BatchSize \leftarrow 2048$\;
+    $generated \leftarrow 0$\;
+    
+    \While{$generated < n$}{
+        $need \leftarrow \min(BatchSize, n - generated)$\;
+        
+        \tcp{Delegate math to the core sampler}
+        $batch\_data \leftarrow$ \Sample{$need$}\;
+        
+        Append $batch\_data$ to CSV at $path$\;
+        $generated \leftarrow generated + need$\;
+        
+        \If{$generated \pmod{10} = 0$}{
+            Print progress\;
+        }
+    }
+    \caption{Hierarchical Password Generation Process}
+    \label{algo:onebatch}
+\end{algorithm}
+
+\vspace{1em}
+
+% --- PART 2: The Mathematical Core ---
+\begin{algorithm}[H]
+    \SetKwInOut{Input}{Input}
+    \SetKwInOut{Output}{Output}
+
+    \underline{function IIDSampleBatched} $(n)$\;
+    \Input{Batch size $n$}
+    \Output{List of $(password, probability)$ tuples}
+    
+    $S \leftarrow$ array of $n$ empty strings\;
+    $L \leftarrow \vec{0}_n$ \tcp*[r]{Log-probability accumulator}
+    $Finished \leftarrow \vec{\text{False}}_n$\;
+    
+    \For{$t \leftarrow 0$ \KwTo $MaxLen$}{
+        \If{\textbf{all} $Finished$}{ \textbf{break}\; }
+        
+        $X \leftarrow$ Encode($S$)\;
+        $P \leftarrow$ Model($X$) \tcp*[r]{Raw probabilities}
+        
+        \tcp{Apply structural constraints}
+        $M \leftarrow$ GetValidNextMask($S$)\;
+        $P \leftarrow P \odot M$\;
+        Normalize rows of $P$ to sum to 1.0\;
+
+        \If{$t = MaxLen - 1$}{
+             Force $P$ to select \text{END} token\;
+        }
+        
+        $next\_tokens \sim \text{Categorical}(P)$\;
+        
+        \For{$i \leftarrow 0$ \KwTo $n-1$}{
+            \If{\textbf{not} $Finished[i]$}{
+                $k \leftarrow next\_tokens[i]$\;
+                $L[i] \leftarrow L[i] + \ln(P[i, k])$\;
+                
+                \eIf{$k = \text{END}$}{
+                    $Finished[i] \leftarrow \textbf{true}$\;
+                }{
+                    $S[i] \leftarrow S[i] + \text{Decode}(k)$\;
+                }
+            }
+        }
+    }
+    \Return zip($S, \exp(L)$)\;
+    \caption{Core Monte Carlo Sampler}
+    \label{algo:oneiid}
+\end{algorithm}
+\subsubsection{\_build\_mc\_curve}
+here we call the function \_build\_mc\_curve which will build the mc-curve from the file saved by \autoref{algo:onebatch} it will return two arrays, A and C,
+A will be the array containing the probabilities in descending order and C will be the array containing the cumulative sum of the estimated ranks, 
+such that for each probability in A at index $i \in [0..n] \wedge n \in \mathbb{N}$ the estimated rank of said probability will be at $C[i]$
+If the arrays were not saved as tensors they will be saved so that future runs may be even faster.
+
+% --- ALGORITHM: The Orchestrator (Build MC Curve) ---
+\begin{algorithm}[H]
+    \SetKwInOut{Input}{Input}
+    \SetKwInOut{Output}{Output}
+    \SetKwFunction{MCSample}{MonteCarloSampling}
+    \SetKwFunction{ReadMC}{ComputeCurveStats}
+    \SetKwFunction{WriteMC}{SaveCurve}
+
+    \underline{function BuildMCCurve} $(\mathcal{E})$\;
+    \Input{Evaluation Dictionary $\mathcal{E}$}
+    \Output{Tensors $A$ (Probabilities) and $C$ (Guess Numbers)}
+    
+    \tcp{Define paths based on base directory}
+    $P_{raw} \leftarrow$ "mc\_samples.gz"; \quad $P_{curve} \leftarrow$ "mc\_rank\_curve.gz"\;
+    $P_{A} \leftarrow$ "A.pt"; \quad $P_{C} \leftarrow$ "C.pt"\;
+    
+    \BlankLine
+    \uIf{files $P_A$ and $P_C$ exist}{
+        \tcp{Fast Path: Load pre-computed tensors}
+        $A \leftarrow \text{Load}(P_A)$; \quad $C \leftarrow \text{Load}(P_C)$\;
+    }
+    \Else{
+        \tcp{Check if raw sampling is required}
+        \If{$P_{raw}$ does not exist}{
+            \MCSample{$P_{raw}, \mathcal{E}$}\;
+        }
+        
+        \tcp{Compute statistics from raw sample file}
+        $(A, C) \leftarrow$ \ReadMC{$P_{raw}$}\;
+        
+        \tcp{Cache results for future runs}
+        \text{Save}($A \to P_A$); \quad \text{Save}($C \to P_C$)\;
+        
+        \If{$P_{curve}$ does not exist}{
+            \WriteMC{$P_{curve}, A, C$}\;
+        }
+    }
+    \Return $(A, C)$\;
+    \caption{Orchestration logic for building the Monte Carlo Curve}
+    \label{algo:buildmccurve}
+\end{algorithm}
+
+\vspace{1em}
+
+% --- ALGORITHM: The Math (Read from MC File) ---
+\begin{algorithm}[H]
+    \SetKwInOut{Input}{Input}
+    \SetKwInOut{Output}{Output}
+
+    \underline{function ComputeCurveStats} $(path)$\;
+    \Input{Path to raw Monte Carlo samples}
+    \Output{Tensor $A$ (sorted probs), Tensor $C$ (cumulative cost)}
+    
+    \tcp{1. Parse probabilities from file}
+    $Probs \leftarrow$ Read column 1 from CSV at $path$\;
+    $A \leftarrow \text{Tensor}(Probs)$\;
+    
+    \tcp{2. Sort descending (most likely first)}
+    $A \leftarrow \text{SortDescending}(A)$\;
+    
+    \tcp{3. Compute expected guesses (CCS'15 Section 3.2)}
+    $N \leftarrow \text{Length}(A)$\;
+    
+    \tcp{Compute inverse probabilities}
+    $C \leftarrow 1 \oslash A$\; 
+    
+    \tcp{Update C with cumulative sum: $C_i = \sum_{j=0}^i (1/A_j)$}
+    $C \leftarrow \text{CumSum}(C)$\;
+    
+    \tcp{Divide by n so we finish applying montecarlo}
+    $C \leftarrow C \oslash N$\;
+    
+    \Return $(A, C)$\;
+    \caption{Calculation of statistical tensors from raw samples}
+    \label{algo:readcsv}
+\end{algorithm}
+
+\vspace{1em}
+
+% --- ALGORITHM: The Writer (Write MC File) ---
+\begin{algorithm}[H]
+    \SetKwInOut{Input}{Input}
+
+    \underline{function SaveCurve} $(path, A, C)$\;
+    \Input{Output path, Tensors $A$ and $C$}
+    
+    Open file at $path$ for writing\;
+    \ForEach{index $i$ in $A$}{
+        \tcp{Write tuple (probability, expected\_guesses)}
+        Write row $(A[i], C[i])$ to file\;
+    }
+    \caption{Serializes the computed curve to disk}
+    \label{algo:writemc}
+\end{algorithm}
+\subsubsection{tester}
+\begin{algorithm}[H]
+    \SetKwInOut{Input}{Input}
+    \SetKwFunction{Load}{LoadCheckpoint}
+    \SetKwFunction{Train}{StartTrain}
+    \SetKwFunction{Sample}{SampleModel}
+    \SetKwFunction{Post}{PostSampling}
+    \SetKwFunction{GetTest}{GetTestDataset}
+    \SetKwFunction{GetTopK}{GetGeneratorFromTopK} % Added this function
+    \SetKwFunction{MCTest}{MonteCarloTest}
+
+    \underline{function StartMonteCarloTest} $(Name_{ckpt})$\;
+    \Input{Name of the checkpoint $Name_{ckpt}$}
+    
+    \tcp{1. Model State Management}
+    $Path_{file} \leftarrow \text{JoinPaths}(Dir_{ckpt}, Name_{ckpt})$\;
+    $Loaded \leftarrow$ \Load{$Path_{file}$}\;
+    
+    \If{\textbf{not} $Loaded$}{
+        Print "Checkpoint missing, starting training..."\;
+        \Train{$Name_{ckpt}$}\;
+        \Load{$Path_{file}$}\;
+    }
+    Print "Checkpoint loaded successfully."\;
+
+    \BlankLine
+    \tcp{2. Prepare Baseline Samples (Top-K)}
+    $P_{topk} \leftarrow$ "topk\_guesses\_str\_float.gz"\;
+    $\mathcal{E} \leftarrow \text{InitEval}(N_{samples})$\;
+    
+    \If{File at $P_{topk}$ does not exist}{
+        Ensure directory exists\;
+        $Generator \leftarrow$ \Sample{$0, \mathcal{E}$}\;
+        
+        Open $P_{topk}$ for writing\;
+        \ForEach{$(pwd, prob)$ in $Generator$}{
+            Write "$pwd \ prob$" to $P_{topk}$\;
+        }
+        Verify total lines written equals $N_{samples}$\;
+        \Post{$\mathcal{E}$}\;
+    }
+
+    \BlankLine
+    \tcp{3. Select Iterator Source and Execute}
+    \eIf{Config.TestTopK \textbf{is true}}{
+        \tcp{Use the Top-K file generated above}
+        $Iterator \leftarrow$ \GetTopK{$P_{topk}, Device$}\;
+    }{
+        \tcp{Use the full test dataset (default)}
+        $Iterator \leftarrow$ \GetTest{}\;
+    }
+    
+    \BlankLine
+    $t_{start} \leftarrow \text{Time}()$\;
+    
+    \MCTest{$\mathcal{E}, Iterator$}\;
+    
+    $t_{delta} \leftarrow \text{Time}() - t_{start}$\;
+    Print "Test completed in: " $t_{delta}$\;
+
+    \caption{Orchestrator for Monte Carlo Testing Session}
+    \label{algo:start_mc_test}
+\end{algorithm}
+\begin{algorithm}[H]
+    \SetKwInOut{Input}{Input}
+    \SetKwInOut{Output}{Output}
+    \SetKwFunction{BuildCurve}{BuildMCCurve}
+    \SetKwFunction{Search}{BinarySearch}
+
+    \underline{function MonteCarloTest} $(\mathcal{E}, \mathcal{T})$\;
+    \Input{Config $\mathcal{E}$, Test Iterator $\mathcal{T}$ (pairs of $pwd, prob$)}
+    \Output{CSV file with estimated ranks $\hat{r}$}
+    
+    \tcp{1. Retrieve statistical curve tensors}
+    $(A, C) \leftarrow$ \BuildCurve{$\mathcal{E}$}\;
+    
+    Open output file for writing\;
+    
+    \ForEach{$(pwd, target\_prob)$ in $\mathcal{T}$}{
+        \tcp{Find where target\_prob fits in distribution A}
+        \tcp{Since A is descending, we search for insertion point}
+        $idx \leftarrow$ \Search{$A, target\_prob$} - 1\;
+        
+        \eIf{$idx < 0$}{
+            $\hat{r} \leftarrow 0$\;
+        }{
+            $\hat{r} \leftarrow C[idx]$\;
+        }
+        
+        Write $(pwd, \hat{r}, target\_prob)$ to file\;
+    }
+    \caption{Rank Estimation via Monte Carlo Curve}
+    \label{algo:mc_test}
+\end{algorithm}
+
+\subsection{Caching step}
+To test the estimation for the evaluation we need to first take the test-dataset and for each 
+password we need to get the probability of it being generated by the model and for good purpouses we should also sort all of it.
+to do that we employ our heapcy which makes this process much less memory intesive than it needs to be.
+we than write everything to a compressed file, if so that we do not need to generate it every time, the problem stems from the fact that for each time 
+the model is trained we need to do this generation since the model could have changed its internal distribution, to optimize this we could
+work in batches to get the probability of multiple passwords at the same time, and to write into a file.
+same with the heap, we could maybe work with multiple heaps and then merge them togheter into one, when finished, all of course using batches and the gpu.
+
+\vspace{1em}
+\SetKwInOut{Input}{Input}
+\SetKwInOut{Output}{Output}
+\begin{algorithm}[H]
+    \SetKwFunction{GenSorted}{GenerateSortedTestSet}
+    
+    \underline{function GetTestDataset} $()$\;
+    \Output{Stream of $(pwd, prob)$ tuples}
+    
+    $Path \leftarrow$ "test\_dataset.csv.gz"\;
+    
+    \If{File at $Path$ does not exist}{
+        \tcp{Expensive generation step}
+        $Stream \leftarrow$ \GenSorted{}\;
+        
+        Open $Path$ for writing (compressed)\;
+        \While{$Stream$ is not empty}{
+            Write batch from $Stream$ to $Path$\;
+        }
+    }
+    
+    \tcp{Yield from the cached file}
+    \Return Stream reading from $Path$\;
+    
+    \caption{Cached Test Dataset Retrieval}
+    \label{algo:get_dataset}
+\end{algorithm}
+
+\vspace{1em}
+
+% --- ALGORITHM 3: The Core Generator (Heap Sort) ---
+\begin{algorithm}[H]
+    \SetKwInOut{Input}{Input}
+    \SetKwFunction{CalcProb}{GetProbability}
+    
+    \underline{function GenerateSortedTestSet} $()$\;
+    \Input{List of test passwords $P_{test}$}
+    \Output{Generator yielding passwords sorted by probability}
+    
+    $\mathcal{H} \leftarrow$ New Min-Heap\;
+    $Tmp \leftarrow$ Create temporary binary file\;
+    
+    \tcp{Phase 1: Calculate and Index}
+    \ForEach{$pwd$ in $P_{test}$}{
+        \If{$pwd$ is valid}{
+            $offset \leftarrow Tmp$.tell()\;
+            $prob \leftarrow$ \CalcProb{$pwd$}\;
+            
+            \tcp{Store raw data on disk}
+            Write $(pwd, prob)$ to $Tmp$\;
+            
+            \tcp{Store index in RAM (prob, file\_offset)}
+            $\mathcal{H}$.Push($(prob, offset)$)\;
+        }
+    }
+    
+    \tcp{Phase 2: Sort and Retrieve}
+    $SortedOffsets \leftarrow$ Extract $N$ largest from $\mathcal{H}$\;
+    Clear $\mathcal{H}$ from memory\;
+    
+    \ForEach{$offset$ in $SortedOffsets$}{
+        Seek $Tmp$ to $offset$\;
+        Read $(pwd, prob)$ from $Tmp$\;
+        \textbf{yield} $(pwd, prob)$\;
+    }
+    
+    \tcp{Cleanup runs in finally block}
+    Delete $Tmp$\;
+
+    \caption{External Sort for Probability Dataset}
+    \label{algo:gen_sorted}
+\end{algorithm}
+
 \chapter{Results and Analysis}
 \label{chap:6}
 \section{Figures}
@@ -541,12 +940,15 @@ $5.0 \cdot 10^8$ & $59.84\%$ &$61.87\%$ & $60.45\%$ & $60.65\%$ & $60.35\%$ & $6
 
 \end{table}
 \chapter{Conclusion}
+summary
+key result (MC reliable up to $5.0\cdot10^8$)
+implication
+future work
 \label{chap:7}
-\section{}
 In this thesis we evidenced how employing Monte Carlo's methods for the estimation of guess-estimates works up to $5.0\cdot10^8$ more than the implementation in \cite{ref:fla}, since the results are so close to the deterministic one we believe this may  indicate that it can be used to estimate the guess rate for even more passwords, for best accuracy we recommend using $10^6$ but if you don't have the compute power you can also use $10^4$ for a more rough but accurate enough estimation.
 For future works we could implement this for the other models in MAYA, and push the number of guesses even further(e.g.$1.0\cdot10^9,2.5\cdot10^9$)
+\chapter{Appendix}
 \appendix
-\textbf{Appendix}
 \section{UML}
 \label{uml}
 \begin{figure}[h!]
