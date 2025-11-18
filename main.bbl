@@ -1,0 +1,46 @@
+\begin{thebibliography}{1}
+
+\bibitem{ref:maya}
+\textsc{Corrias, W., De~Gaspari, F., Hitaj, D., and Mancini, L.~V.}
+\newblock {MAYA}: A unified benchmarking framework for generative password-guessing models.
+\newblock In \emph{2026 {IEEE} Symposium on Security and Privacy ({SP})} (2026).
+\newblock ArXiv preprint arXiv:2504.16651v2.
+\newblock Available from: \url{https://arxiv.org/abs/2504.16651v2}.
+
+\bibitem{ref:dellamico}
+\textsc{Dell'Amico, M. and Filippone, M.}
+\newblock Monte carlo strength evaluation: Fast and reliable password checking.
+\newblock In \emph{Proceedings of the 22nd {ACM} Conference on Computer and Communications Security ({CCS}'15)}. ACM Press (2015).
+\newblock Available from: \url{https://dl.acm.org/doi/pdf/10.1145/2810103.2813631}.
+
+\bibitem{ref:loeve}
+\textsc{Loève, M.}
+\newblock \emph{Probability Theory I}.
+\newblock Springer, New York, 4th edn. (1977).
+\newblock Available from: \url{https://archive.org/details/probabilitytheor0000loev_h6n0/mode/2up}.
+
+\bibitem{ref:fla}
+\textsc{Melicher, W., Ur, B., Segreti, S.~M., Komanduri, S., Bauer, L., Christin, N., and Cranor, L.~F.}
+\newblock Fast, accurate, and lean: A low-overhead, high-accuracy method for a-priori password strength estimation.
+\newblock In \emph{25th {USENIX} Security Symposium ({USENIX} Security 16)} (2016).
+\newblock Available from: \url{https://www.usenix.org/conference/usenixsecurity16/technical-sessions/presentation/melicher}.
+
+\bibitem{ref:rnnlstm}
+\textsc{Mienye, I.~D., Swart, T.~G., and Obaido, G.}
+\newblock Recurrent neural networks: A comprehensive review of architectures, variants, and applications.
+\newblock \emph{Information}, \textbf{15} (2024).
+\newblock Available from: \url{https://www.mdpi.com/2078-2489/15/9/517}.
+
+\bibitem{ref:rfguess}
+\textsc{Wang, D., Zou, Y., Zhang, Z., and Xiu, K.}
+\newblock Password guessing using random forest.
+\newblock In \emph{32nd {USENIX} Security Symposium ({USENIX} Security 23)} (2023).
+\newblock Available from: \url{https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-password-guessing}.
+
+\bibitem{ref:pwdguessllm}
+\textsc{Zou, Y., An, M., and Wang, D.}
+\newblock Password guessing using large language models.
+\newblock In \emph{{USENIX} Security Symposium ({USENIX} Security 25)} (2025).
+\newblock Available from: \url{https://www.usenix.org/conference/usenixsecurity25/presentation/zou-yunkai}.
+
+\end{thebibliography}
