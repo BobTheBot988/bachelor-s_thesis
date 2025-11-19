@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2026/dev/Arch Linux) (preloaded format=pdflatex 2025.11.18)  19 NOV 2025 11:49
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2026/dev/Arch Linux) (preloaded format=pdflatex 2025.11.18)  19 NOV 2025 12:03
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -924,45 +924,45 @@ Chapter 6.
 <img/benchmark-1000000.png, id=597, 570.933pt x 354.123pt>
 File: img/benchmark-1000000.png Graphic file (type png)
 <use img/benchmark-1000000.png>
-Package pdftex.def Info: img/benchmark-1000000.png  used on input line 921.
+Package pdftex.def Info: img/benchmark-1000000.png  used on input line 938.
 (pdftex.def)             Requested size: 316.80121pt x 196.50275pt.
 Package microtype Info: Fixing zero \fontdimen 6 for font `U/dsrom/m/n/10'
-(microtype)             (new value: 10.0pt) on input line 922.
+(microtype)             (new value: 10.0pt) on input line 939.
 Package microtype Info: Fixing zero \fontdimen 6 for font `U/dsrom/m/n/7'
-(microtype)             (new value: 7.0pt) on input line 922.
+(microtype)             (new value: 7.0pt) on input line 939.
 <img/guess_pcg_10.png, id=599, 886.512pt x 571.8966pt>
 File: img/guess_pcg_10.png Graphic file (type png)
 <use img/guess_pcg_10.png>
-Package pdftex.def Info: img/guess_pcg_10.png  used on input line 928.
+Package pdftex.def Info: img/guess_pcg_10.png  used on input line 945.
 (pdftex.def)             Requested size: 126.7229pt x 81.74918pt.
 <img/guess_pcg_100.png, id=600, 886.512pt x 571.8966pt>
 File: img/guess_pcg_100.png Graphic file (type png)
 <use img/guess_pcg_100.png>
-Package pdftex.def Info: img/guess_pcg_100.png  used on input line 935.
+Package pdftex.def Info: img/guess_pcg_100.png  used on input line 952.
 (pdftex.def)             Requested size: 126.7229pt x 81.74918pt.
 <img/guess_pcg_1000.png, id=601, 886.512pt x 571.8966pt>
 File: img/guess_pcg_1000.png Graphic file (type png)
 <use img/guess_pcg_1000.png>
-Package pdftex.def Info: img/guess_pcg_1000.png  used on input line 941.
+Package pdftex.def Info: img/guess_pcg_1000.png  used on input line 958.
 (pdftex.def)             Requested size: 126.7229pt x 81.74918pt.
 <img/guess_pcg_10000.png, id=602, 886.512pt x 571.8966pt>
 File: img/guess_pcg_10000.png Graphic file (type png)
 <use img/guess_pcg_10000.png>
-Package pdftex.def Info: img/guess_pcg_10000.png  used on input line 949.
+Package pdftex.def Info: img/guess_pcg_10000.png  used on input line 966.
 (pdftex.def)             Requested size: 126.7229pt x 81.74918pt.
 <img/guess_pcg_100000.png, id=603, 886.512pt x 571.8966pt>
 File: img/guess_pcg_100000.png Graphic file (type png)
 <use img/guess_pcg_100000.png>
-Package pdftex.def Info: img/guess_pcg_100000.png  used on input line 956.
+Package pdftex.def Info: img/guess_pcg_100000.png  used on input line 973.
 (pdftex.def)             Requested size: 126.7229pt x 81.74918pt.
 File: img/guess_pcg_100000.png Graphic file (type png)
 <use img/guess_pcg_100000.png>
-Package pdftex.def Info: img/guess_pcg_100000.png  used on input line 963.
+Package pdftex.def Info: img/guess_pcg_100000.png  used on input line 980.
 (pdftex.def)             Requested size: 126.7229pt x 81.74918pt.
 <img/guess_pcg_combined.png, id=604, 886.512pt x 571.8966pt>
 File: img/guess_pcg_combined.png Graphic file (type png)
 <use img/guess_pcg_combined.png>
-Package pdftex.def Info: img/guess_pcg_combined.png  used on input line 972.
+Package pdftex.def Info: img/guess_pcg_combined.png  used on input line 989.
 (pdftex.def)             Requested size: 336.60242pt x 217.13971pt.
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
@@ -986,7 +986,7 @@ Chapter 8.
 <img/UML.png, id=635, 954.6867pt x 396.0396pt>
 File: img/UML.png Graphic file (type png)
 <use img/UML.png>
-Package pdftex.def Info: img/UML.png  used on input line 1049.
+Package pdftex.def Info: img/UML.png  used on input line 1066.
 (pdftex.def)             Requested size: 395.99821pt x 254.63683pt.
 
 
@@ -1016,7 +1016,7 @@ Here is how much of TeX's memory you used:
  14 hyphenation exceptions out of 8191
  84i,22n,131p,1001b,699s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf-dist/fonts/type1/public/doublestroke/dsrom10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmbx8.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmbxi10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmcsc10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmex10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmmi8.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmr10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmr17.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmr6.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmr7.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmr8.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmr9.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmri10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmss10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmss17.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmssbx10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmsy8.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on main.pdf (31 pages, 2348994 bytes).
+Output written on main.pdf (31 pages, 2349046 bytes).
 PDF statistics:
  848 PDF objects out of 1000 (max. 8388607)
  731 compressed objects within 8 object streams

@@ -552,9 +552,11 @@ inside of which we instantiate a guesser objectm we then call the OneBatchToCont
     \Input{Output directory $path$, Config dictionary $\mathcal{E}$}
     
     \tcp{1. Factory method creates the Guesser object}
+    \vspace{0.5em}
     $guesser \leftarrow$ \Build{$\mathcal{E}$}\;
     
     \tcp{2. The object executes the batch processing}
+    \vspace{0.5em}
     $N \leftarrow \text{self}.n\_samples$\;
     $guesser$.\RunBatch{$N$, \textbf{true}, $path$}\;
     \BlankLine
@@ -572,6 +574,7 @@ inside of which we instantiate a guesser objectm we then call the OneBatchToCont
         $need \leftarrow \min(BatchSize, n - generated)$\;
         
         \tcp{Delegate math to the core sampler}
+        \vspace{0.5em}
         $batch\_data \leftarrow$ \Sample{$need$}\;
         
         Append $batch\_data$ to CSV at $path$\;
@@ -607,6 +610,7 @@ inside of which we instantiate a guesser objectm we then call the OneBatchToCont
         $P \leftarrow$ Model($X$) \tcp*[r]{Raw probabilities}
         
         \tcp{Apply structural constraints}
+        \vspace{0.5em}
         $M \leftarrow$ GetValidNextMask($S$)\;
         $P \leftarrow P \odot M$\;
         Normalize rows of $P$ to sum to 1.0\;
@@ -653,6 +657,7 @@ If the arrays were not saved as tensors they will be saved so that future runs m
     \Output{Tensors $A$ (Probabilities) and $C$ (Guess Numbers)}
     
     \tcp{Define paths based on base directory}
+    \vspace{0.5em}
     $P_{raw} \leftarrow$ "mc\_samples.gz"; \quad $P_{curve} \leftarrow$ "mc\_rank\_curve.gz"\;
     $P_{A} \leftarrow$ "A.pt"; \quad $P_{C} \leftarrow$ "C.pt"\;
     
@@ -663,14 +668,17 @@ If the arrays were not saved as tensors they will be saved so that future runs m
     }
     \Else{
         \tcp{Check if raw sampling is required}
+        \vspace{0.5em}
         \If{$P_{raw}$ does not exist}{
             \MCSample{$P_{raw}, \mathcal{E}$}\;
         }
         
         \tcp{Compute statistics from raw sample file}
+        \vspace{0.5em}
         $(A, C) \leftarrow$ \ReadMC{$P_{raw}$}\;
         
         \tcp{Cache results for future runs}
+        \vspace{0.5em}
         \text{Save}($A \to P_A$); \quad \text{Save}($C \to P_C$)\;
         
         \If{$P_{curve}$ does not exist}{
@@ -749,6 +757,7 @@ If the arrays were not saved as tensors they will be saved so that future runs m
     \Input{Name of the checkpoint $Name_{ckpt}$}
     
     \tcp{1. Model State Management}
+    \vspace{0.5em}
     $Path_{file} \leftarrow \text{JoinPaths}(Dir_{ckpt}, Name_{ckpt})$\;
     $Loaded \leftarrow$ \Load{$Path_{file}$}\;
     
@@ -761,6 +770,7 @@ If the arrays were not saved as tensors they will be saved so that future runs m
 
     \BlankLine
     \tcp{2. Prepare Baseline Samples (Top-K)}
+    \vspace{0.5em}
     $P_{topk} \leftarrow$ "topk\_guesses\_str\_float.gz"\;
     $\mathcal{E} \leftarrow \text{InitEval}(N_{samples})$\;
     
@@ -778,6 +788,7 @@ If the arrays were not saved as tensors they will be saved so that future runs m
 
     \BlankLine
     \tcp{3. Select Iterator Source and Execute}
+    \vspace{0.5em}
     \eIf{Config.TestTopK \textbf{is true}}{
         \tcp{Use the Top-K file generated above}
         $Iterator \leftarrow$ \GetTopK{$P_{topk}, Device$}\;
@@ -808,6 +819,7 @@ If the arrays were not saved as tensors they will be saved so that future runs m
     \Output{CSV file with estimated ranks $\hat{r}$}
     
     \tcp{1. Retrieve statistical curve tensors}
+    \vspace{0.5em}
     $(A, C) \leftarrow$ \BuildCurve{$\mathcal{E}$}\;
     
     Open output file for writing\;
@@ -815,6 +827,7 @@ If the arrays were not saved as tensors they will be saved so that future runs m
     \ForEach{$(pwd, target\_prob)$ in $\mathcal{T}$}{
         \tcp{Find where target\_prob fits in distribution A}
         \tcp{Since A is descending, we search for insertion point}
+        \vspace{0.5em}
         $idx \leftarrow$ \Search{$A, target\_prob$} - 1\;
         
         \eIf{$idx < 0$}{
@@ -860,6 +873,7 @@ same with the heap, we could maybe work with multiple heaps and then merge them 
     }
     
     \tcp{Yield from the cached file}
+    \vspace{0.5em}
     \Return Stream reading from $Path$\;
     
     \caption{Cached Test Dataset Retrieval}
@@ -881,6 +895,7 @@ same with the heap, we could maybe work with multiple heaps and then merge them 
     $Tmp \leftarrow$ Create temporary binary file\;
     
     \tcp{Phase 1: Calculate and Index}
+    \vspace{0.5em}
     \ForEach{$pwd$ in $P_{test}$}{
         \If{$pwd$ is valid}{
             $offset \leftarrow Tmp$.tell()\;
@@ -895,6 +910,7 @@ same with the heap, we could maybe work with multiple heaps and then merge them 
     }
     
     \tcp{Phase 2: Sort and Retrieve}
+    \vspace{0.5em}
     $SortedOffsets \leftarrow$ Extract $N$ largest from $\mathcal{H}$\;
     Clear $\mathcal{H}$ from memory\;
     
@@ -905,6 +921,7 @@ same with the heap, we could maybe work with multiple heaps and then merge them 
     }
     
     \tcp{Cleanup runs in finally block}
+    \vspace{0.5em}
     Delete $Tmp$\;
 
     \caption{External Sort for Probability Dataset}
