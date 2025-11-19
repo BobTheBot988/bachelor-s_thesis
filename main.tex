@@ -313,12 +313,12 @@ so let A be the descending sorted array of probabilities for getting generated b
 and let C be the array of  the estimated ranks for each password.
 
 \begin{align*}
-\text{Let } \mathbf{A} = [p(\beta_0),p(\beta_1)\dots,p(\beta_n-1)]\\
-\text{Let } \mathbf{C}[i] = \frac{1}{n}\sum_{j=0}^i-1 \frac{1}{A[j]} = C[i-1] + \frac{1}{n\cdot A[i]}  
+&\text{Let } \mathbf{A} = [p(\beta_0),p(\beta_1)\dots,p(\beta_n-1)]\\
+&\text{Let } \mathbf{C}[i] = \frac{1}{n}\sum_{j=0}^i-1 \frac{1}{A[j]} = C[i-1] + \frac{1}{n\cdot A[i]}  
 \label{eq:optestimaterank}
 \end{align*}
 
-So given a password $\alpha$ to find its rank given A and C, we need to reverse binary search  in A so that we find the index $i$ of the probability which is higher than $p(\alpha)$,
+So given a password $\alpha$ to find its rank given A and C, we need to reverse binary search  in A so that we find the index $i$ of the probability which is lower than $p(\alpha)$,
 We than take the value stored at $C[i]$ which will be the $\hat{R}(\alpha)$, so we found our solution really fast.
 We measure the efficacy of the model by seeing in how many attempts it takes to guess its test-dataset completely, the formula to do this is very simple:
 
