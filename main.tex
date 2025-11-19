@@ -124,80 +124,67 @@
 
 \mainmatter
 \chapter{Introduction}
-\lettrine[lines=2, findent=3pt, nindent=0pt]{I}{}n the field of probabilistic  Password-guessing models there is a big problem, we take a long time to evaluate a passwords rank and a model. 
-This is important since we want to give the maximum security possible to services relying on passwords(e.g. a website), and to do that we need fast and accurate password rank evaluation.
-We must address these because if not then the security of many services would be left compromised by this kind of attacks which rely on PGMs.
+\lettrine[lines=2, findent=3pt, nindent=0pt]{I}{}n the field of probabilistic password-guessing models, evaluating a password's resistance to guessing attacks requires estimating its \textit{guess number}. The guess number represents how many attempts an attacker would need, on average, before generating or matching a given password. 
 
-\textbf{This thesis makes the following contributions:}
+Computing this quantity exactly is infeasible for modern probabilistic models, as the password space is extremely large. For this reason, Monte Carlo estimation is employed to obtain an approximate rank without enumerating the full distribution. However, Monte Carlo estimation places strong computational requirements on the sampling procedure, which often becomes a bottleneck in practice.
 
-\begin{enumerate}
-    \item A Cython-based item structure that reduces memory usage by $59.79\%$.
-    \item A custom-heap implementation that reduces memory usage by $87.47\%$.
-    \item Integration into MAYA to accelerate Monte Carlo estimation.
-    \item Evaluation of accuracy across $\Theta$ sizes.
-    \item A reproducible implementation.
-\end{enumerate}
+The MAYA framework builds upon Monte Carlo methods to evaluate password-guessing models efficiently. Monte Carlo techniques, especially those derived from Dell'Amico and Filippone~\cite{ref:dellamico}, offer effective rank estimation but require very large sample sizes to achieve stable accuracy. This, in turn, demands highly efficient sampling and memory management.
 
+During the development of this thesis, the primary challenge was to optimize MAYA’s sampling system used in the Fast, Lean and Accurate (FLA) password model. The original implementation relied heavily on Python data structures, which resulted in excessive memory usage due to object overhead. Because sampling dominates the cost of Monte Carlo estimation, reducing memory consumption and execution time became essential for enabling larger sample sizes and faster evaluations.
+
+This thesis presents several contributions aimed at improving the efficiency of password rank estimation:
+
+\begin{itemize}
+    \item An implementation of a Cython-based optimized heap item (\texttt{heap-item}), which reduces memory consumption while maintaining compatibility with Python's \texttt{heapq} module.
+    \item A custom heap implementation (\texttt{heapcy}), designed to maximize performance by storing only file offsets rather than full strings, resulting in significant memory savings and faster operations.
+    \item An integration of these optimizations into the MAYA framework to improve Monte Carlo rank estimation.
+    \item A large-scale Monte Carlo experiment demonstrating that evaluation-estimation remains reliable up to $x = 5 \cdot 10^8$, far beyond the $10^7$ tested in the original FLA paper.
+\end{itemize}
+
+The remainder of this thesis is structured as follows. Chapter~2 presents the motivation for this work, discussing the importance of password strength evaluation and the limitations of existing sampling approaches. Chapter~3 provides background material and an overview of related work in password-guessing models and Monte Carlo estimation. Chapter~4 describes the methodology and the proposed optimizations in detail. Chapter~5 explains the experimental setup used for evaluating the new implementations. Chapter~6 presents and analyzes the results. Finally, Chapter~7 concludes the thesis and outlines directions for future research.
 \chapter{Motivation}
 \label{chap:2}
-Human-chosen passwords today face a grave danger since malicious actors have devoleped new methods, based on Password-guessing Models.
-We need to understand how these attackers prioritize guesses and how many attempts are needed to break a password using this "novel" models.
+Human-chosen passwords remain one of the most widely used authentication mechanisms, yet they continue to exhibit significant weaknesses. Password leaks occur frequently and at large scale, enabling attackers to build increasingly accurate probabilistic models that capture human password-selection patterns. Understanding how resistant user-chosen passwords are to such guessing attacks is therefore essential both for security research and for practical password-strength meters.
 
-Therefore we developed Password-guessing Models of our own to study and to evaluate the strength of a password.
-They assign a probability to each password and, by ranking passwords in decreasing probability order, they allow us to approximate how quickly an adversary could guess them.
-This rank is the foundation of virtually all password-strength meters, risk assessments, and password-policy design.
+Modern password-guessing models estimate the probability of strings and generate guesses in decreasing likelihood order. A password's \textit{guess number} is defined as the number of guesses an attacker would need before encountering it in this ranked list. Determining this value exactly is infeasible for models with exponentially large output spaces. Monte Carlo estimation offers a tractable alternative, providing unbiased estimates of guess numbers without requiring full enumeration.
 
-However, computing password ranks is computationally expensive.
-For this reason, modern frameworks rely on Monte Carlo estimation \cite{ref:dellamico}, which approximates password rank using samples drawn from the model’s distribution in an i.i.d manner.
-Monte Carlo estimation is effective, but it places a heavy computational burden on sampling, since millions of samples are required for stable accuracy.
+However, Monte Carlo estimation imposes significant computational demands. Accurate estimation requires very large sample sizes, often on the order of millions or tens of millions of generated passwords. Since each sample requires updating heap structures, memory footprint and sampling speed become the primary bottlenecks in frameworks such as MAYA.
+Monte Carlo also has a problem when estimating low probability passwords, as demonstrated in \cite{ref:stanek}  there are ways to mitigate it, but they were not implemented in this thesis since they do not change the final result very much.
 
-This is critical for models such as Fast, Lean and Accurate (FLA), whose primary strength is client-side efficiency.
-FLA is specifically designed to run on low-resource devices, meaning that memory usage and sampling performance become decisive factors.
-The original implementation inside MAYA, while correct, suffers from two limitations:
+The Fast, Lean and Accurate (FLA) model is specifically designed to operate under strict memory and latency constraints. Its efficiency makes it suitable for client-side password-strength estimation. Nevertheless, its Python-based sampling system in MAYA suffers from high memory usage due to Python object overhead, which limits the size of the evaluation size and slows down the evaluation process.
 
-High memory usage, due to Python objects (tuples, strings, floats) stored in a large heap.
-
-These limitations create bottlenecks when evaluating models on large datasets or when computing Monte Carlo estimates for many passwords.
-For example, MAYA requires building a Monte Carlo curve for each checkpoint of each model.
-If sampling is slow or memory-intensive, evaluating large models becomes impractical, and researchers are unable to explore bigger $\Theta$ values or newer model architectures.
-
-The goal of this thesis is to address these limitations by optimizing the sampling process at the core of FLA-based Monte Carlo estimation, and to see if montecarlo estimation for the evaluation of a model keeps up after $10^7$ as previously proved by \cite{ref:fla}.
-We introduce two new heap-based sampling implementations:
-
-heap-item, a Cython-optimized drop-in replacement for Python heap items, reducing memory usage while keeping compatibility.
-
-heapcy, a fully custom Cython heap storing only integer references to string positions, achieving substantial memory reduction.
-
-These improvements are not merely engineering optimizations.
-They directly enable MAYA to scale to larger sample sizes, evaluate more complex models, and compute Monte Carlo estimates more efficiently.
-By reducing memory consumption by up to 87\%, our work makes Monte Carlo-based password evaluation faster, more accurate, and more accessible on standard hardware.
-
-This allowed us to push the topk sampler to $5*10^8$ and prove that the Monte Carlo Estimation keeps up.
-\chapter{Background and Related Work}
+The motivation behind this thesis is to extend the scalability of Monte Carlo estimation for password-guessing models by optimizing the underlying sampling mechanism. By designing more memory-efficient heap structures and reducing Python overhead through Cython, we enable substantially larger sample sizes and faster evaluation, both of which improve the accuracy and practicality of password-strength modeling.\chapter{Background and Related Work}
 \label{chap:3} 
 \section{Monte Carlo Estimation}
 \label{sec:montecarlo}
-Given an analytically complex problem to solve, using the Monte Carlo estimation will give us a value close enough to the real solution, even though it is much more simple analytically speaking.
-If we take a sample of n items from the main problem, we then perform a sum over the values then divide at the end with $\#samples$.
+Given an analytically complex problem to solve, the use of Monte Carlo estimation provides a value close to the true solution, despite being analytically simpler.
+If a sample of n items  is drawn from the main problem, we then perform a sum over the values, then divide at the end by $\#samples$.
  This will give us an approximation of the expected value of our original problem.
 Let us say that we do not know the probability of a coin toss, we can use Monte Carlo to estimate this probability:
   \begin{gather*}
   \text{Given a Bernoulli random variable } X \in \{0,1\} \\
   \hat{p}= \frac{1}{n}\sum_{i=0}^{n-1}X_i
 \end{gather*}
-     As shown in the formula, above and according to the weak law of large numbers \footnote{The weak law of large numbers states that an observed sample average from a sample will be closer to the true population average as the sample grows larger. \cite{ref:loeve}}
-     $$\displaystyle\Large \lim_{n\rightarrow\infty} \frac{1}{n} \sum_{i=1}^{n}X_i = 0.5$$
+    As shown in the formula, above and according to the weak law of large numbers \footnote{The weak law of large numbers states that an observed sample average from a sample will be closer to the true population average as the sample grows larger. \cite{ref:loeve}}
+
+$$\displaystyle \lim_{n\rightarrow\infty} \frac{1}{n} \sum_{i=1}^{n}X_i = 0.5$$
 
 \section{Markov Chains}
-Markov chains give us a framework through which we can model sequential events it works like this:
-we have a set of states for each state we have associated a probability distribution of going to another, that can be easily represented with a matrix.
+Markov chains provide a framework through which we can model sequential 
+events. It works as follows: 
+we have a set of states for each state we have associated a 
+probability distribution of going to another, that can be easily 
+represented with a matrix.
 To formalize this we can look at the below representation
+
  \begin{gather*}
   \text{Let } S = \{S_1, S_2, \dots, S_n\} \text{ be the state space.} \\
   \text{Let } P \text{ be the } n \times n \text{ transition matrix, where} \\
   P_{ij} = P(X_{t+1} = S_j \mid X_t = S_i)
 \end{gather*}
-We can see applications of this in fields such as: NLP\footnote{Natural Language Processign}, PPM\footnote{Probabilistic Password Models} etc...
+
+We can see applications of this in fields such as: NLP\footnote{Natural Language Processing}, PPM\footnote{Probabilistic Password Models} etc...
+Markov Chains are often the basis for prediction models such as Probabilistic Password Models, but they are not enough to model these problems in fact in recent years we started using different kinds of Password-guessing models, like LLM based ones .
 \pagebreak
 \section{Cython}
 Cython (not to be confused with CPython) is a superset of Python. It is a compiled language, rather than interpreted, and allows for the creation of C/C++ extensions for Python with ease.
@@ -208,7 +195,7 @@ We first define compiler directives (starting with \#). These tell the compiler 
 Cython provides three types of function declarators:
 
 \begin{itemize}
-  \item \textbf{cdef}: Defines a C-only function. These are very fast but cannot be called from external Python code. By default, they act like standard Python functions and hold the \href{https://wiki.python.org/moin/GlobalInterpreterLock}{GIL}\footnote{The Global Intepreter Lock is a Python feature which was introduced to elimimate race conditions in parallel operations on objects, Python needs it because objects are tracked by the Garbage collector by keeping count of the references of said object when the references reach 0 then the garbage collector frees memory, if there are parallel operations on the same object this could lead to an early free inducing a use after free, or race conditions}, allowing access to Python objects. However, if defined with \texttt{nogil} (e.g., \texttt{cdef void func() nogil:}), they release the GIL; in this mode, Python structures cannot be accessed.
+  \item \textbf{cdef}: Defines a C-only function. These are very fast but cannot be called from external Python code. By default, they act like standard Python functions and hold the \href{https://wiki.python.org/moin/GlobalInterpreterLock}{GIL}\footnote{The Global Interpreter Lock is a Python feature which was introduced to eliminate race conditions in parallel operations on objects, Python needs it because objects are tracked by the Garbage collector by keeping count of the references of said object when the references reach 0 then the garbage collector frees memory, if there are parallel operations on the same object this could lead to an early free inducing a use after free, or race conditions}, allowing access to Python objects. However, if defined with \texttt{nogil} (e.g., \texttt{cdef void func() nogil:}), they release the GIL; in this mode, Python structures cannot be accessed.
     
     \item \textbf{cpdef}: Creates two versions of the function: a C version for use within Cython and a Python wrapper for external use. This offers the best of both worlds but introduces slight overhead compared to pure \texttt{cdef}.
     
@@ -227,13 +214,14 @@ This distinction allows us to write performance-critical loops/operations in \te
         \textbf{External Python}     & No  & Yes & Yes \\
         \bottomrule
     \end{tabular}
-    \caption{Calling Conventions: Who can call whom?}
+    \caption{interaction matrix between Python and Cython execution contexts. cdef functions optimize performance by bypassing the Python interpreter but are inaccessible to external Python modules}
     \label{tab:cythonfuncs}
 \end{table*}
+
 \subsection{Compilation and Distribution}
-Cython's compiler is easily installed with pip, it will output .whl files that then can be imported into Python files like normal.
+Cython's compiler will output .whl files that then can be imported into Python files like normal.
 The problem is that it can be burdensome to compile for every Python Version Header with only the Cython compiler.
-Therefore we opted to use \href{https://github.com/pypa/cibuildwheel}{cibuildwheel} which when integrated with Github's  CI/CD it makes distributing the software really easily.
+Therefore we opted to use \href{https://github.com/pypa/cibuildwheel}{cibuildwheel} which when integrated with Github's  CI/CD this facilitates software distribution.
 
 \section{Recurrent Neural Networks(RNN)}
 Models that have 3 layers\footnote{This is a simplification \cite{ref:rnnlstm}}: 
@@ -243,6 +231,7 @@ Models that have 3 layers\footnote{This is a simplification \cite{ref:rnnlstm}}:
     \item Hidden Layer H  
     \item Output Layer Y
 \end{enumerate}
+
 This is what happens at each step t:
 the input vector $x_t$ is used by the RNN to update its hidden state $h_t$,
 with this function\cite{ref:rnnlstm}:
@@ -251,15 +240,15 @@ with this function\cite{ref:rnnlstm}:
     h_t = \sigma_h(W_{xh}x_t+W_{hh}h_{t-1}+b_h),
 \end{equation}
 
-$W_{xh}$ is the matrix that represents the weights between the input layer and the hidden one\cite{ref:rnnlstm}, $W_{hh}$ is the weight matrix for the recurrent connection and $b_h$ is just the bias vector.
+$W_{xh}$ is the matrix that represents the weights between the input layer and the hidden one\cite{ref:rnnlstm}, $W_{hh}$ is the weight matrix for the recurrent connection and $b_h$ is the bias vector.
 
-At the end the model will update it is $y_t$ state in this manner \cite{ref:rnnlstm}:
+At the end the model will update its $y_t$ state in this manner \cite{ref:rnnlstm}:
 \begin{equation}
     y_t = \sigma_y(W_{hy}h_t + b_y)
 \end{equation}
 
 $W_{hy}$ is the matrix that represents the weights between the hidden layer and the output layer\cite{ref:rnnlstm}, and $b_y$ is the bias vector.
-The recurring part is the fact that each time we are computing the hidden state, however this model type does not have a good "Memory", because during the hidden state calculation the gradient starts to "vanish"  which means that the model cannot learn long sequences of words, to solve this problem we have many evolutions of this kind of mode.
+The recurring part is the computation of the hidden state at each step. However, this model type does not have good "Memory" because, during the hidden state calculation, the gradient starts to "vanish." This means that the model cannot learn long sequences of words. To solve this problem, there are many evolutions of this kind of model.
 \section{Long Short Term Memory(LSTM)}
 This  is an evolution of RNN's which mitigates the vanishing gradient problem by controlling it. They introduce the concept of  these 3 gates:
 
@@ -269,27 +258,16 @@ This  is an evolution of RNN's which mitigates the vanishing gradient problem by
     \item output
 \end{enumerate}
 
-Each of these tell the model how much of the previous, input,hidden, and output states to consider from the previous state.
+Each of these tell the model how much of the previous, input, hidden and output states to consider from the previous state.
 Even though we have this improvement over the base model, this is still not perfect as the vanishing can still occur, nevertheless it is better than the normal one\cite{ref:rnnlstm}.
-\subsection{Binary Search}
-\label{sec:binserach}
-Searching algorithm that runs in $O(log_2n)$, it works on an sorted iterable like a list, tuple, etc...
-example: 
-Let us play the guessing game, I want you to guess the number I am thinking of, this number is $n \in \mathds{N} 0\leq n\leq100$ and you start
-"1" and I say higher, 
-"2" and I say higher,
-"3" and I say higher,
-at this point you understand that it can take up to 100 tries or at most $O(n)$
-So you come up with a better idea, you start from the middle, 
-"50" and I say higher,
-"75" and I say higher,
-"100" and I say you guessed correctly.
-As we can see you guessed correctly with just 3 tries, instead of 100, this respects our claim of $O(log_2n)$, we can confidently say that this is a good alogorithm, the problem with it is that everything must be sorted the order does not really matter you just switch the conditions.
+LSTMs are particularly effective for password modeling  because they capture long-range dependencies better than normal RNNs or simple Markov Chain Models.
+
+
 \section{Probabilistic Password Models}
 P.P.Ms are a necessary part of a modern login security system they are needed to evaluate the strength of the user's password,
 since today's attackers also use these models to crack passwords more efficiently.
-When defending they evaluate the strengh of a given password by telling you how many attempts it would take to guess it this is known as the \textbf{ Rank } of a password, the higher the rank the more secure the password.
-Attackers prefer to use these models instead of brute forcing,Brute forcing is a procedure in which we try every possible password to find the correct one e.g.  "What is Roberto Di Rosa's Gmail password?" \\ 
+When defending they evaluate the strength of a given password by telling you how many attempts it would take to guess it this is known as the \textbf{ Rank } of a password, the higher the rank the more secure the password.
+Attackers prefer to use these models instead of brute forcing. Brute forcing is a procedure in which we try every possible password to find the correct one e.g.  "What is Roberto Di Rosa's Gmail password?" \\ 
 Let's assume he used only characters from the english alphabet and that the password has a maximum length of 12 characters, so we know that there are 26 characters in the english alphabet let's start by the first:
  \begin{enumerate}
   \item a
@@ -302,8 +280,8 @@ Let's assume he used only characters from the english alphabet and that the pass
  \end{enumerate}
 
 We will try until we reach our result, the problem with this approach is that we might have to try:  
-$26^{ 12 } \sim 95.43$ quadrilions times which for any pc is very computationally demanding.
-We could use optimized versions like \href{https://www.openwall.com/john/}{ John The Ripper }, which fasten the  brute forcing job but are still very slow compared to these models.
+$26^{ 12 } \sim 95.43$ quadrillions times, which for any pc is very computationally demanding.
+We could use optimized versions like \href{https://www.openwall.com/john/}{ John The Ripper }, which speed up the brute forcing job but are still very slow compared to these models.
 These probabilistic models instead rely on something else, after training we take all of the tuples of 
 
 \begin{enumerate}
@@ -311,7 +289,7 @@ These probabilistic models instead rely on something else, after training we tak
   \item password's probability
 \end{enumerate}
 
-and put them inside of a set $\Gamma$, \footnote{If the model we are working with is implicit, we don't have access to any distribution, therefore at first it's impossible}
+and put them inside of a set $\Gamma$, \footnote{If the model we are working with is implicit, we don't have access to any distribution, therefore at first it's impossible to use calculate the rank of a password in these models, without any modification/new model.}
 we can now find out the rank of a given password $\alpha$.
 
 \begin{equation}
@@ -319,10 +297,10 @@ we can now find out the rank of a given password $\alpha$.
   \label{eq:fullrank}
 \end{equation}
 
-This will give us the rank of a password or more simply the amount of attempts it would take to guess it, the main problem from this approach is its data intensivity the set of strings can be really big, so to be faster we need to use Monte Carlo's estimation\ref{sec:montecarlo},
-we start by defining a set $\Theta$, it will contain a sample of strings taken from a i.i.d.\footnote{Indepently,Identically Distributed we need this because if the distribution is not iid therefore we will not be able to get accurate estimates} distribution $\Psi$ based on the internal one of the model.
+This will give us the rank of a password, or more simply, the amount of attempts it would take to guess it, the main problem from this approach is its data intensivity the set of strings can be really big, so to be faster we need to use Monte Carlo's estimation\ref{sec:montecarlo},
+we start by defining a set $\Theta$, it will contain a sample of strings taken from a i.i.d.\footnote{Independently, Identically Distributed we need this because if the distribution is not i.i.d. therefore we will not be able to get accurate estimates} distribution $\Psi$ based on the internal one of the model.
 Furthermore the larger the size of $\Theta$ the better the estimation as proved in \cite{ref:dellamico}, this will help us especially with Low-probability passwords since they have higher variance. 
-In this paper we implemented the version found in \cite{ref:dellamico} without any improvements as seen in \cite{ref:stanek} this has not impacted on the performance of the guess\% estimation.
+In this paper, we implemented the version found in \cite{ref:dellamico} without any improvements as seen in \cite{ref:stanek} this has not impacted on the performance of the guess\% estimation.
 To this day we have not found a way to better this variance, the latest attempts have yielded some results in lowering the variance therefore making montecarlo more accurate especially for Low-probability passwords, but they are not good enough yet.
 We can now Estimate the \textbf{Rank}, we define $\hat{R}(\alpha)$ as the estimation of the Rank for a given password $\alpha$:
 \begin{equation}
@@ -340,9 +318,9 @@ and let C be the array of  the estimated ranks for each password.
 \label{eq:optestimaterank}
 \end{align*}
 
-So given a password $\alpha$ to find its rank given A and C, we just need to reverse binary search \ref{sec:binserach} in A so that we find the index $i$ of the probability which is higher than $p(\alpha)$,
+So given a password $\alpha$ to find its rank given A and C, we need to reverse binary search  in A so that we find the index $i$ of the probability which is higher than $p(\alpha)$,
 We than take the value stored at $C[i]$ which will be the $\hat{R}(\alpha)$, so we found our solution really fast.
-We measure the efficacy of the model by seeing in how many attempts it takes to guesse its test-dataset completely, the formula to do this is very simple:
+We measure the efficacy of the model by seeing in how many attempts it takes to guess its test-dataset completely, the formula to do this is very simple:
 
 \begin{equation}
   G(x) = \frac{|\mathcal{S}(x) \cap \mathcal{T}|}{|\mathcal{T}|}
@@ -354,11 +332,11 @@ $\mathcal{S}(x)$ is the top-x sampling function that gives us the top-x most pro
 $G(x)$ is the ratio of the intersection between the sample set and the test-dataset,
 
 They work by getting trained on a dataset(e.g. RockYou,Libero,TaoBao,etc...), from these datasets they will take the most frequent passwords and they will create distributions for these passwords in a way as to reflect the frequency of characters
-all of this using one of these RNN's,Markov chains, PCFGs,LSTMS,Random Forests\cite{ref:rfguess},
+all of this using one of these RNNs, Markov chains, PCFGs, LSTMS, Random Forests\cite{ref:rfguess},
 They can be separated into 2 types:
 
 \begin{enumerate}
-    \item \textbf{ Trawling} are aimed guessing correctly as many passwords as possible\cite{ref:pwdguessllm} and are constrained just by the amount of resources and the number of guesses itself.
+    \item \textbf{ Trawling} are aimed guessing correctly as many passwords as possible\cite{ref:pwdguessllm} and are constrained  by the amount of resources and the number of guesses itself.
     \item \textbf{ Targeted  }are aimed at guessing the password of a single user given some specifics (e.g.: Name,Surname,Sex,Nationality,etc...)
 \end{enumerate}
 
@@ -375,7 +353,7 @@ They also used Monte Carlo estimation\cite{ref:dellamico} to efficiently look at
 \subsection{Modern}
 \subsubsection{Password Guessing With LLMs}
 As seen in \cite{ref:pwdguessllm} they brought forward the concept of using LLMs for password guessing and obtained really good results in the evaluation of guesses.
-These LLMs can get to higher guessing numbers much faster than previous implementations, instead of 
+These LLMs can get to higher guessing numbers much faster than previous implementations, instead of previous models.
 
 \label{sec:background}
 
@@ -388,9 +366,8 @@ These LLMs can get to higher guessing numbers much faster than previous implemen
 In this section, we start by analyzing the problems we encountered with MAYA and discussing the solutions we found to the said problems, their strengths, and weaknesses.
 
 The problem we encountered was the need to sample the top-k elements from the distribution within FLA.
-Solution 1: Implement the item in Cython to improve performance and reduce memory usage.
-Solution 2: Write all the heap in Cython and do not store any strings.
-\subsection{Pure Python}
+To address these limitations, we  explore two distinct strategies: 
+The first, \textit{Heap-item}, focuses on reducing item size via Cython structs. The second, \textit{Custom-heap}, introduces a file-offset mechanism to eliminate string storage entirely\subsection{Pure Python}
 \label{PurePython}
 The first problem we tackled was the original implementation of FLA's sampling algorithm\cite{ref:fla}, which occupied a significant memory usage due to the usage of pure Python structures such as lists, tuples, strings, and floats.
 The main problem came from the fact that each item was saved as a tuple of str, float, which was appended into a list, and that list was manipulated with the \href{https://docs.python.org/3/library/heapq.html}{heapq} module.
@@ -406,16 +383,16 @@ Python heap structures store each heap item as a fully-fledged Python object
 \end{enumerate}
 
 As a result, storing $10^6$ heap entries may require hundreds of megabytes,
-when combined with all of the other objects we keep in memory this results in really big memory usage in the magnitude of 200GBs when sampling $5*10^8$ making it impossible to scale $\Theta$ to the sizes required for big model Evaluation.
+when combined with all of the other objects we keep in memory this results in excessive memory usage, on the order of 200 GB when sampling $5\cdot10^8$ making it impossible to scale $\Theta$ to the sizes required for big model Evaluation.
 
 \subsection{Heap-item}
 \label{heapitem}
 The first proposed solution was to build a \href{https://github.com/BobTheBot988/heap-item}{heap-item} custom module written in Cython thus maximizing performance and compatibility with Python.
-The main problem with this approach is the fact that like in pure python, each heap item is an object that must be tracked by python's \href{https://docs.python.org/3/library/gc.html}{garbage collector}, nevertheless this approach helped us reduce memory consumption by $\sim59.79\%$ instead of the pure python approach as seen in Figure \ref{fig:1}, alas further optimization was necessary, so we opted for a custom heap called \href{https://github.com/BobTheBot988/heapcy/tree/main}{heapcy}.
+A significant limitation of this approach is that, similar to the pure Python implementation, each heap item remains a distinct object managed by the garbage collector., each heap item is an object that must be tracked by python's \href{https://docs.python.org/3/library/gc.html}{garbage collector}, nevertheless this approach helped us reduce memory consumption by $\sim59.79\%$ instead of the pure python approach as seen in Figure \ref{fig:1}, however further optimization was necessary, so we opted for a custom heap called \href{https://github.com/BobTheBot988/heapcy/tree/main}{heapcy}.
 
 Using Cython allows us to replace Python objects with C-structured
-objects giving us improved memory usage while also giving us ease of integration in python, we could have used c++ and then have written the integrations with \href{https://nanobind.readthedocs.io/en/latest/}{nanobind}, but that would have taken considerably more time and the fast software distribution would have been more complicated.
-Since we use cython we have access to \href{https://github.com/pypa/cibuildwheel}{cibuildwheel} which when integrated with github CI/CD allows us to publish binaries to pypy rendering software distribution really easy.
+objects giving us improved memory usage while also giving us ease of integration in Python, we could have used C++ and then have written the integrations with \href{https://nanobind.readthedocs.io/en/latest/}{nanobind}, but that would have taken considerably more time and the fast software distribution would have been more complicated.
+Since we use Cython we have access to \href{https://github.com/pypa/cibuildwheel}{cibuildwheel} which when integrated with github CI/CD allows us to publish binaries to PyPi rendering software distribution really easy.
 These Cython objects:
 \begin{itemize}
   \item are allocated in contiguous memory,
@@ -425,15 +402,22 @@ These Cython objects:
 \end{itemize}
 
 This reduces per-item memory usage tremendously. However, each item is still
-an python object, so total memory still scales linearly with the number of stored items.
+an Python object, so total memory still scales linearly with the number of stored items.
 \subsection{Custom-heap}
 
 \label{customheap}
 Rather than simply implementing a heap in Cython, we adopted a different approach by storing only the string's position in a file as a reference. This method significantly reduced memory usage, as shown in Figure \ref{fig:1}, and required only a single heap object instead of multiple instances as in previous implementations \ref{PurePython} and \ref{heapitem}.
-This approach has given us an improvement of $\sim87.47\%$ over \ref{PurePython} and a $\sim68.85\%$ over \ref{heapitem}
-While this solution offers superior performance, it is more complex to use compared to the previous solutions, so the choice should depend on the specific requirements of your situation.
+We first copy everything which was guessed by the \texttt{complete\_guessing} from the gzipped output file to a tmpfile created in the /tmp directory.
+The copy is made with the stream-based copying, after copying we keep the tmp-file open and then we start to take the strings position with the \texttt{tell()} method, we then read the line and save it all in the heapcy.
+After the heap we finish saving all of the heap elements, we start taking all of the offsets in decreasing order by probability, into a list, which will be passed to the helper 
+method included into heapcy with generatorn pattern which will occupy $O(1)$ of memory
+and it will give us the strings one by one in $O(1)$ since we use the \texttt{ seek() } method, which in binary files is $O(1)$.
+The I/O overhead added by the reading/writing of the files does not make the program take more time since the Cython optimizations counter said overhead, in our testing we registered for a sampling of 100\_000 items: 
+2 hours and 40 minutes for the unoptimized version and 2 hours and 37 minutes for the optimized one.
+Therefore we are confident to say that this optimized version is good enough since,it has given us a memory consumption improvement of $\sim87.47\%$ over \ref{PurePython} and a $\sim68.85\%$ over \ref{heapitem}
+While this solution offers superior memory performance, it is more complex to use compared to the previous solutions, so the choice should depend on the specific requirements of the development enviroment.
 
-Since we don't actually need strings in memory during the sampling process, we can just 
+Since we do not actually need strings in memory during the sampling process, we can 
 write a  password once to a binary file, and the heap
 can store only its integer file offset together with the probability value.
 
@@ -458,14 +442,16 @@ used by MAYA and FLA. Its size and structure also provide statistically meaningf
 evaluation for both trawling and targeted password-guessing attacks.
 \section{Model and Training}
 As discussed, there was no time to implement the functions required to test with other models.
-Model wise we used FLA found in MAYA\cite{ref:maya}, and optimized as said in \ref{sec:Opt}. The passwords were generated with a maximum length of 12 characters, the model was pre-trained in the RockYou dataset and as a test-config we used \href{https://github.com/williamcorrias/MAYA-Password-Benchmarking/blob/master/config/test/rq1.yaml}{rq1}.
+Model wise we used FLA found in MAYA\cite{ref:maya},the model was pre-trained on the RockYou training set with
+a maximum password length of 12 characters, using the \texttt{rq1} test configuration. 
+This setup isolates the impact of the memory optimizations, allowing for a direct assessment of the sampling efficiency without confounding variables from differing model architectures.
 
 
 \paragraph{To evaluate these models we need to see how accurate their guessing \cite{ref:fla} is, the following section will show us how to do this in multiple ways.}
 \section{Evaluation Metrics} 
 \subsection{Password Rank Estimation}
-\textbf{Why can't we just use the deterministic rank ?}
-While using the deterministic rank would give us the most precise result, it requires an enormous amount of reseouces since we first need fo to calculate the entire set
+\subsubsection{Limitations of Deterministic Ranking.}
+While using the deterministic rank would give us the most precise result, it requires an enormous amount of resources since we first need to calculate the entire set
 of passwords yieldable by the model, so we opt for the estimation
 As described above, to get our guessing percentage estimate we first need to implement the Monte Carlo seen in [\cite{ref:dellamico}].
 To do this we need 1 set:
@@ -477,7 +463,6 @@ To do this we need 1 set:
 
 The standard way to get the guessing percentage of a model is the empirical way:
  \\ 
-\textbf{Eq.} Empirical guess number for a given x. 
 \begin{equation}
 \label{eq:1}
 G(x) = \frac{|\mathcal{G}_x \cap \mathcal{T}|}{|\mathcal{T}|}   
@@ -487,14 +472,14 @@ G(x) = \frac{|\mathcal{G}_x \cap \mathcal{T}|}{|\mathcal{T}|}
   \item $\mathcal{T}$ is the test-dataset containing all of the strings in the test-dataset.
 \end{itemize}
 
-This division give us the real ratio of how many passwords of the test-dataset where guessed which can be seen as a percentage in \ref{tab:2} last column.
+This division gives us the real ratio of how many passwords of the test dataset were guessed, which can be seen as a percentage in the last column of \ref{tab:2}.
 The former approach was very slow, we needed to find another way to reach a good enough solution.
 
 \subsection{Estimation with Monte Carlo}
 We employ a Monte Carlo estimate \eqref{eq:rhat} to get a result similar to  \eqref{eq:1}.
 $\hat{R}$, represents the estimate of the rank (number of times the model needs to guess\footnote{As defined in \cite{ref:dellamico}}) to generate the password.
 
-Thanks to this we require much less effort compared to the deterministic way, since all we need to do is to compute the Monte Carlo curve just once per Model Checkpoint, save it to .csv file and then for each guess number apply the formula above and we will have our results significantly faster than the previous approach.
+Thanks to this we require much less effort compared to the deterministic way, since all we need to do is to compute the Monte Carlo curve  once per Model Checkpoint, save it to .csv file and then for each guess number apply the formula above and we will have our results significantly faster than the previous approach.
 
 The former approach was very slow since we needed to take the $top_k$ where k is the guess number \cite{ref:maya}.
 
@@ -536,8 +521,8 @@ There are two ways to calculate the Monte Carlo estimation both specified in \ci
 \section{Implementation Details}
 \subsection{Explanation}
 \subsubsection{get\_theta}
-The implementation for FLA, is very simple we first call the get\_theta function
-inside of which we instantiate a guesser objectm we then call the OneBatchToControlThemAll which will sample in batches from the model distribution calling IIDSampleBatched and then these samples are written to a csv file which is our montecarlo\_sampling or $\Theta$.
+The implementation for FLA, is very simple we first call the \texttt{get\_theta} function
+inside of which we instantiate a guesser object we then call the OneBatchToControlThemAll which will sample in batches from the model distribution calling IIDSampleBatched and then these samples are written to a csv file which is our montecarlo\_sampling or $\Theta$.
 
 % --- PART 1: The Orchestrator & The Driver ---
 \begin{algorithm}[H]
@@ -743,6 +728,7 @@ If the arrays were not saved as tensors they will be saved so that future runs m
     \label{algo:writemc}
 \end{algorithm}
 \subsubsection{tester}
+    
 \begin{algorithm}[H]
     \SetKwInOut{Input}{Input}
     \SetKwFunction{Load}{LoadCheckpoint}
@@ -842,14 +828,110 @@ If the arrays were not saved as tensors they will be saved so that future runs m
     \label{algo:mc_test}
 \end{algorithm}
 
+\begin{algorithm}[H]
+    \SetKwInOut{Input}{Input}
+    \SetKwInOut{Output}{Output}
+    \SetKwFunction{Load}{LoadGuessNumbers}
+    \SetKwFunction{Analyze}{ComputeCrackRates}
+    \SetKwFunction{Plot}{GeneratePlots}
+
+    % -------------------------------------------------------
+    % Function 1: Loading the Data
+    % -------------------------------------------------------
+    \underline{function LoadGuessNumbers} $(path)$\;
+    \Input{Path to Monte Carlo CSV results}
+    \Output{Sorted list of guess numbers $G$}
+    
+    \tcp{1. Parse rank estimates from file}
+    \vspace{0.3em}
+    $RawRows \leftarrow$ Read CSV at $path$\;
+    $G \leftarrow$ Extract column \texttt{rank\_hat} from $RawRows$\;
+    
+    \tcp{2. Sort ascending for binary search (CDF)}
+    \vspace{0.3em}
+    $G \leftarrow \text{SortAscending}(G)$\;
+    \Return $G$\;
+    \BlankLine
+    \hrule
+    \BlankLine
+
+    % -------------------------------------------------------
+    % Function 2: The Core Math (Binning & CDF)
+    % -------------------------------------------------------
+    \underline{function ComputeCrackRates} $(G, range, step)$\ modified from \cite{ref:pwdguessllm}'s souce code;
+    \BlankLine
+    \Input{Sorted guesses $G$, Range $[min, max]$, Step size}
+    \Output{Vectors $X$ (thresholds) and $Y$ (crack rates)}
+
+    \tcp{1. Generate logarithmic thresholds (base 2)}
+    \vspace{0.5em}
+    $X \leftarrow \{ min + step \cdot 2^i \mid i \ge 0 \land val \le max \}$\;
+    
+    \tcp{2. Inject specific high-value benchmarks}
+    \vspace{0.5em}
+    $Benchmarks \leftarrow \{10^6, 2.5\cdot10^6, \dots, 5\cdot10^8\}$\;
+    $X \leftarrow \text{SortAscending}(\text{Unique}(X \cup Benchmarks))$\;
+    
+    \tcp{3. Compute CDF via Binary Search}
+    \vspace{0.5em}
+    $N \leftarrow \text{Length}(G)$\;
+    $Y \leftarrow \text{EmptyList}()$\;
+    
+    \ForEach{$val \in X$}{
+        \tcp{Count elements $\le val$ (bisect\_left)}
+        \vspace{0.5em}
+        $count \leftarrow \text{Index of first element} \ge val \text{ in } G$\;
+        $rate \leftarrow count / N$\;
+        Append $rate$ to $Y$\;
+    }
+
+    \tcp{4. Serialize statistics to TSV}
+    \vspace{0.5em}
+    Write $(X, Y)$ to \texttt{Table\_file\_sample\_size\_N.tsv}\;
+    
+    \Return $(X, Y)$\;
+    \BlankLine
+    \hrule
+    \BlankLine
+
+    % -------------------------------------------------------
+    % Function 3: The Main Driver Loop
+    % -------------------------------------------------------
+    \underline{function MainProcess} $()$\;
+    
+    $Sizes \leftarrow [10, 100, 1000, \dots, 10^6]$\;
+    $PlotBuffer \leftarrow \text{EmptyList}()$\;
+    
+    \ForEach{$S \in Sizes$}{
+        $path \leftarrow \text{f-string}("mc\_results\_\{S\}.csv")$\;
+        
+        \tcp{Load and Analyze}
+        \vspace{0.5em}
+        $guesses \leftarrow$ \Load{$path$}\;
+        $(x\_vals, y\_rates) \leftarrow$ \Analyze{$guesses, [1, MAX], 0.5$}\;
+        
+        Print Progress: "Sample Size: $S$, Rate: $y\_rates[-1]$"\;
+        Append $(x\_vals, y\_rates)$ to $PlotBuffer$\;
+        
+        \tcp{Generate individual plot}
+        \vspace{0.5em}
+        Render single curve to $png$\;
+    }
+    
+    \tcp{Generate combined comparison plot}
+    \vspace{0.5em}
+    Render all curves in $PlotBuffer$ to \texttt{guess\_pcg\_combined.png}\;
+
+    \caption{Monte Carlo Guessing Curve Analysis}
+    \label{algo:guessing_curve}
+\end{algorithm}
+
 \subsection{Caching step}
 To test the estimation for the evaluation we need to first take the test-dataset and for each 
-password we need to get the probability of it being generated by the model and for good purpouses we should also sort all of it.
-to do that we employ our heapcy which makes this process much less memory intesive than it needs to be.
-we than write everything to a compressed file, if so that we do not need to generate it every time, the problem stems from the fact that for each time 
+password we need to get the probability of it being generated by the model and for good purposes, we should also sort all of it. To do that, we employ our \texttt{heapcy}, which makes this process much less memory intensive. We then write everything to a compressed file, if so that we do not need to generate it every time, the problem stems from the fact that for each time 
 the model is trained we need to do this generation since the model could have changed its internal distribution, to optimize this we could
 work in batches to get the probability of multiple passwords at the same time, and to write into a file.
-same with the heap, we could maybe work with multiple heaps and then merge them togheter into one, when finished, all of course using batches and the gpu.
+same with the heap, we could maybe work with multiple heaps and then merge them together into one, when finished, all of course using batches and the gpu.
 
 \vspace{1em}
 \SetKwInOut{Input}{Input}
@@ -936,7 +1018,7 @@ same with the heap, we could maybe work with multiple heaps and then merge them 
         \renewcommand{\thefigure}{\arabic{figure}} % Removes the chapter prefix (e.g., "5.")
     \setcounter{figure}{0}      
      \includegraphics[width=0.8\linewidth]{img/benchmark-1000000.png}
-     \caption{Memory usage of the three heap implementations when storing $10^6$ items.}
+     \caption{Comparative analysis of memory consumption across the three sampling strategies for a batch of $10^6$ items. The \texttt{heapcy} (Custom-heap) implementation demonstrates a $\sim87.47\%$ reduction in memory usage compared to the baseline \texttt{Pure Python} approach. This drastic drop is attributed to the file-offset mechanism (Section \ref{customheap}), which eliminates the overhead of storing string objects in RAM The reduction in memory is not only an efficiency gain it changes the problem class from 'requires a supercomputer' to 'runs on a laptop'.}
      \label{fig:1}
  \end{figure}
 \begin{figure}[h!tbp]
@@ -985,9 +1067,9 @@ same with the heap, we could maybe work with multiple heaps and then merge them 
 \begin{figure}[h!]
     \centering
        \renewcommand{\thefigure}{\arabic{figure}} % Removes the chapter prefix (e.g., "5.")
-    \setcounter{figure}{3}      
+    \setcounter{figure}{2}      
     \includegraphics[width=0.85\linewidth]{img/guess_pcg_combined.png}
-    \caption{Comparison of the montecarlo run for every theta size}
+    \caption{Convergence of the Monte Carlo rank estimation as the sample size $|\Theta|$ increases. Subfigures (a) through (d) illustrate that at lower sample sizes ($10^1 - 10^3$), the estimation exhibits high variance (noise). As $|\Theta|$ approaches $10^5$ and $10^6$ (f), the curve stabilizes, confirming that the memory optimizations allow for sample sizes large enough to produce deterministic-like accuracy.}
     \label{fig:3}
 \end{figure}
 \FloatBarrier
@@ -1041,20 +1123,20 @@ $2.5 \cdot 10^8$ & $59.84\%$ &$54.45\%$ & $54.74\%$ & $54.92\%$ & $54.85\%$ & $5
 $5.0 \cdot 10^8$ & $59.84\%$ &$61.87\%$ & $60.45\%$ & $60.65\%$ & $60.35\%$ & $60.42\%$ & $60.47\%$ \\
  \bottomrule
 \end{tabular}
-\caption{Comparison of crack rates over five runs with different $\theta$ size.}
+\caption{Stability of the Guessing Percentage ($G(x)$) across varying Monte Carlo sample sizes. The data indicates that while estimates for high-probability passwords stabilize quickly (at $|\Theta|=10^4$), accurate estimation for lower-probability tails (higher Guess Numbers) requires the massive sample sizes ($|\Theta| \geq 10^6$).}
 \label{tab:2}
 
 \end{table}
 \chapter{Conclusion}
 \label{chap:7}
 In Conclusion we managed to optimize the sampling of FLA, added montecarlo to MAYA and we proved with results how the montecarlo estimation is very good at estimating the evaluation.
-We went beyond FLAs original paper by proving the result up to $5.0 \cdot 10^8$ this may imply that we do not need to the evaluation the good old way, by using enumeration, instead we can use montecarlo to see how good a model really is.
+We went beyond FLAs original paper by proving the result up to $5.0 \cdot 10^8$ this may imply that we do not need to the evaluation deterministic enumeration, by using enumeration, instead we can use montecarlo to see how good a model really is.
 Being able to extend Monte Carlo sampling to $|\Theta| = 5\cdot10^8$ is 
 important, since the accuracy of it is entirely dependent on the size of $|\Theta|$ 
 The larger the sample size the smaller the variance in the tail of the distribution(Low probability passwords), which is where many
 real passwords reside. Our optimizations therefore enable a  better evaluation of password-guessing models without requiring 
 enormous amounts of memory usage.
-In future works we should expand this method to every model implemented inside of MAYA, and try montecarlo for even larger numbers, since the new optimization allows us to enumerate up to even bigger numbers without encurring into big performance issues.
+In future works we should expand this method to every model implemented inside of MAYA, and try montecarlo for even larger numbers, since the new optimization allows us to enumerate up to even bigger numbers without incurring into big performance issues.
 We should as well optimize the caching part \ref{algo:gen_sorted}, since for now it is all sequential and takes a considerable amount of time $\sim 4hr$ for RockYou test-dataset $\sim 4.0*10^6$ passwords.
 We could also improve the heapcy implementation to have a dynamic memory instead of the current implementation.
 \chapter{Appendix}
