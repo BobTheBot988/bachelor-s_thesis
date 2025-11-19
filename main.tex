@@ -143,7 +143,7 @@ We must address these because if not then the security of many services would be
 Human-chosen passwords today face a grave danger since malicious actors have devoleped new methods, based on Password-guessing Models.
 We need to understand how these attackers prioritize guesses and how many attempts are needed to break a password using this "novel" models.
 
-Therefore we developed Password-guessing Models of our own to study and to evaluate the strength of a passoword.
+Therefore we developed Password-guessing Models of our own to study and to evaluate the strength of a password.
 They assign a probability to each password and, by ranking passwords in decreasing probability order, they allow us to approximate how quickly an adversary could guess them.
 This rank is the foundation of virtually all password-strength meters, risk assessments, and password-policy design.
 
@@ -200,19 +200,40 @@ To formalize this we can look at the below representation
 We can see applications of this in fields such as: NLP\footnote{Natural Language Processign}, PPM\footnote{Probabilistic Password Models} etc...
 \pagebreak
 \section{Cython}
-Cython ( not to be confused with CPython ) is a compiled programming language that is used to write c/c++ extensions for python very easy.
-The following explains the typical workflow: 
-  We first define preprocessing options that are read by the compiler with \# like in c 
-  this will tell the compiler how to translate the code in c/c++ and then how to write the bindings,
-  we then start writing the code in a python style syntax.
-  \subsection{Cython functions}
-    Cython has 3 types of functions declarators: 
-    \begin{itemize}
-      \item cdef this will tell the compiler to write a c-only equivalent, we cannot use any python structures, functions inside of these only code which can be directly translated to c we can turn off the \href{https://wiki.python.org/moin/GlobalInterpreterLock}{GIL} for all of the function at the definiton e.g.(cdef void my\_func() nogil:).
-      \item cpdef this will be used to call c functions and is available to call in python, we can also use python functions and libraries inside of these we can also turn off the GIL with the python keyword WITH.
-      \item def this are standard python functions which cannot access cdef functions directly.
-    \end{itemize}
-  This will allow us to write performance heavy loops in cdef functions and we can call them in cpdef functions to maximize the code simplicity.
+Cython (not to be confused with CPython) is a superset of Python. It is a compiled language, rather than interpreted, and allows for the creation of C/C++ extensions for Python with ease.
+The typical workflow is as follows:
+We first define compiler directives (starting with \#). These tell the compiler how to translate the code to C/C++ and handle bindings. We then write the logic using Python-like syntax.
+
+\subsection{Cython functions}
+Cython provides three types of function declarators:
+
+\begin{itemize}
+  \item \textbf{cdef}: Defines a C-only function. These are very fast but cannot be called from external Python code. By default, they act like standard Python functions and hold the \href{https://wiki.python.org/moin/GlobalInterpreterLock}{GIL}\footnote{The Global Intepreter Lock is a Python feature which was introduced to elimimate race conditions in parallel operations on objects, Python needs it because objects are tracked by the Garbage collector by keeping count of the references of said object when the references reach 0 then the garbage collector frees memory, if there are parallel operations on the same object this could lead to an early free inducing a use after free, or race conditions}, allowing access to Python objects. However, if defined with \texttt{nogil} (e.g., \texttt{cdef void func() nogil:}), they release the GIL; in this mode, Python structures cannot be accessed.
+    
+    \item \textbf{cpdef}: Creates two versions of the function: a C version for use within Cython and a Python wrapper for external use. This offers the best of both worlds but introduces slight overhead compared to pure \texttt{cdef}.
+    
+    \item \textbf{def}: These are standard Python functions. They are accessible from anywhere but incur the standard Python function call overhead.
+\end{itemize}
+
+This distinction allows us to write performance-critical loops/operations in \texttt{cdef} functions while keeping the interface accessible via \texttt{cpdef} or \texttt{def}.
+
+\begin{table*}[h!tbp]
+    \centering
+    \begin{tabular}{lccc}
+        \toprule
+        \textbf{Caller} & \textbf{Can call cdef?} & \textbf{Can call cpdef?} & \textbf{Can call def?} \\
+        \midrule
+        \textbf{Cython (cdef/cpdef)} & Yes & Yes & Yes \\
+        \textbf{External Python}     & No  & Yes & Yes \\
+        \bottomrule
+    \end{tabular}
+    \caption{Calling Conventions: Who can call whom?}
+    \label{tab:cythonfuncs}
+\end{table*}
+\subsection{Compilation and Distribution}
+Cython's compiler is easily installed with pip, it will output .whl files that then can be imported into Python files like normal.
+The problem is that it can be burdensome to compile for every Python Version Header with only the Cython compiler.
+Therefore we opted to use \href{https://github.com/pypa/cibuildwheel}{cibuildwheel} which when integrated with Github's  CI/CD it makes distributing the software really easily.
 
 \section{Recurrent Neural Networks(RNN)}
 Models that have 3 layers\footnote{This is a simplification \cite{ref:rnnlstm}}: 
@@ -1008,10 +1029,6 @@ $5.0 \cdot 10^8$ & $59.84\%$ &$61.87\%$ & $60.45\%$ & $60.65\%$ & $60.35\%$ & $6
 
 \end{table}
 \chapter{Conclusion}
-summary
-key result (MC reliable up to $5.0\cdot10^8$)
-implication
-future work
 \label{chap:7}
 In Conclusion we managed to optimize the sampling of FLA, added montecarlo to MAYA and we proved with results how the montecarlo estimation is very good at estimating the evaluation.
 We went beyond FLAs original paper by proving the result up to $5.0 \cdot 10^8$ this may imply that we do not need to the evaluation the good old way, by using enumeration, instead we can use montecarlo to see how good a model really is.

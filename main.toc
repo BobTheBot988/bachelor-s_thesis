@@ -5,39 +5,40 @@
 \contentsline {section}{\numberline {3.2}Markov Chains}{4}{section.3.2}%
 \contentsline {section}{\numberline {3.3}Cython}{5}{section.3.3}%
 \contentsline {subsection}{\numberline {3.3.1}Cython functions}{5}{subsection.3.3.1}%
-\contentsline {section}{\numberline {3.4}Recurrent Neural Networks(RNN)}{5}{section.3.4}%
+\contentsline {subsection}{\numberline {3.3.2}Compilation and Distribution}{5}{subsection.3.3.2}%
+\contentsline {section}{\numberline {3.4}Recurrent Neural Networks(RNN)}{6}{section.3.4}%
 \contentsline {section}{\numberline {3.5}Long Short Term Memory(LSTM)}{6}{section.3.5}%
-\contentsline {subsection}{\numberline {3.5.1}Binary Search}{6}{subsection.3.5.1}%
-\contentsline {section}{\numberline {3.6}Probabilistic Password Models}{6}{section.3.6}%
-\contentsline {section}{\numberline {3.7}Previous Works}{8}{section.3.7}%
-\contentsline {subsection}{\numberline {3.7.1}Classical Works}{8}{subsection.3.7.1}%
-\contentsline {subsubsection}{Fast Accurate And Lean(FLA)}{8}{section*.2}%
-\contentsline {subsection}{\numberline {3.7.2}Modern}{8}{subsection.3.7.2}%
-\contentsline {subsubsection}{Password Guessing With LLMs}{8}{section*.3}%
-\contentsline {chapter}{\numberline {4}Methodology}{9}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Optimizing FLA sampling process}{9}{section.4.1}%
-\contentsline {subsection}{\numberline {4.1.1}Pure Python}{9}{subsection.4.1.1}%
-\contentsline {subsection}{\numberline {4.1.2}Heap-item}{9}{subsection.4.1.2}%
-\contentsline {subsection}{\numberline {4.1.3}Custom-heap}{10}{subsection.4.1.3}%
-\contentsline {chapter}{\numberline {5}Experimental Setup}{11}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Dataset}{11}{section.5.1}%
-\contentsline {section}{\numberline {5.2}Model and Training}{11}{section.5.2}%
-\contentsline {paragraph}{To evaluate these models we need to see how accurate their guessing \cite {ref:fla} is, the following section will show us how to do this in multiple ways.}{11}{section*.4}%
-\contentsline {section}{\numberline {5.3}Evaluation Metrics}{11}{section.5.3}%
-\contentsline {subsection}{\numberline {5.3.1}Password Rank Estimation}{11}{subsection.5.3.1}%
-\contentsline {subsection}{\numberline {5.3.2}Guess Number and Guessing Percentage}{11}{subsection.5.3.2}%
-\contentsline {subsection}{\numberline {5.3.3}Estimation with Monte Carlo}{12}{subsection.5.3.3}%
-\contentsline {section}{\numberline {5.4}Implementation Details}{13}{section.5.4}%
-\contentsline {subsection}{\numberline {5.4.1}Explanation}{13}{subsection.5.4.1}%
-\contentsline {subsubsection}{get\_theta}{13}{section*.5}%
-\contentsline {subsubsection}{\_build\_mc\_curve}{14}{section*.6}%
-\contentsline {subsubsection}{tester}{16}{section*.7}%
-\contentsline {subsection}{\numberline {5.4.2}Caching step}{17}{subsection.5.4.2}%
-\contentsline {chapter}{\numberline {6}Results and Analysis}{19}{chapter.6}%
-\contentsline {section}{\numberline {6.1}Figures}{19}{section.6.1}%
-\contentsline {section}{\numberline {6.2}Tables}{20}{section.6.2}%
-\contentsline {chapter}{\numberline {7}Conclusion}{22}{chapter.7}%
-\contentsline {chapter}{\numberline {8}Appendix}{23}{chapter.8}%
-\contentsline {section}{\numberline {.1}UML}{23}{section.Alph0.1}%
-\contentsline {section}{\numberline {.2}Extended FOL}{23}{section.Alph0.2}%
-\contentsline {chapter}{Bibliography}{25}{appendix*.15}%
+\contentsline {subsection}{\numberline {3.5.1}Binary Search}{7}{subsection.3.5.1}%
+\contentsline {section}{\numberline {3.6}Probabilistic Password Models}{7}{section.3.6}%
+\contentsline {section}{\numberline {3.7}Previous Works}{9}{section.3.7}%
+\contentsline {subsection}{\numberline {3.7.1}Classical Works}{9}{subsection.3.7.1}%
+\contentsline {subsubsection}{Fast Accurate And Lean(FLA)}{9}{section*.3}%
+\contentsline {subsection}{\numberline {3.7.2}Modern}{9}{subsection.3.7.2}%
+\contentsline {subsubsection}{Password Guessing With LLMs}{9}{section*.4}%
+\contentsline {chapter}{\numberline {4}Methodology}{10}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Optimizing FLA sampling process}{10}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}Pure Python}{10}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}Heap-item}{10}{subsection.4.1.2}%
+\contentsline {subsection}{\numberline {4.1.3}Custom-heap}{11}{subsection.4.1.3}%
+\contentsline {chapter}{\numberline {5}Experimental Setup}{12}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Dataset}{12}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Model and Training}{12}{section.5.2}%
+\contentsline {paragraph}{To evaluate these models we need to see how accurate their guessing \cite {ref:fla} is, the following section will show us how to do this in multiple ways.}{12}{section*.5}%
+\contentsline {section}{\numberline {5.3}Evaluation Metrics}{12}{section.5.3}%
+\contentsline {subsection}{\numberline {5.3.1}Password Rank Estimation}{12}{subsection.5.3.1}%
+\contentsline {subsection}{\numberline {5.3.2}Guess Number and Guessing Percentage}{12}{subsection.5.3.2}%
+\contentsline {subsection}{\numberline {5.3.3}Estimation with Monte Carlo}{13}{subsection.5.3.3}%
+\contentsline {section}{\numberline {5.4}Implementation Details}{14}{section.5.4}%
+\contentsline {subsection}{\numberline {5.4.1}Explanation}{14}{subsection.5.4.1}%
+\contentsline {subsubsection}{get\_theta}{14}{section*.6}%
+\contentsline {subsubsection}{\_build\_mc\_curve}{15}{section*.7}%
+\contentsline {subsubsection}{tester}{17}{section*.8}%
+\contentsline {subsection}{\numberline {5.4.2}Caching step}{18}{subsection.5.4.2}%
+\contentsline {chapter}{\numberline {6}Results and Analysis}{20}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Figures}{20}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Tables}{21}{section.6.2}%
+\contentsline {chapter}{\numberline {7}Conclusion}{23}{chapter.7}%
+\contentsline {chapter}{\numberline {8}Appendix}{24}{chapter.8}%
+\contentsline {section}{\numberline {.1}UML}{24}{section.Alph0.1}%
+\contentsline {section}{\numberline {.2}Extended FOL}{24}{section.Alph0.2}%
+\contentsline {chapter}{Bibliography}{26}{appendix*.16}%

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2026/dev/Arch Linux) (preloaded format=pdflatex 2025.11.18)  18 NOV 2025 19:09
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2026/dev/Arch Linux) (preloaded format=pdflatex 2025.11.18)  19 NOV 2025 11:49
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -719,7 +719,7 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `lmss' (encoding: T1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
-<sapienzalogo.pdf, id=152, 288.07625pt x 89.33376pt>
+<sapienzalogo.pdf, id=156, 288.07625pt x 89.33376pt>
 File: sapienzalogo.pdf Graphic file (type pdf)
 <use sapienzalogo.pdf>
 Package pdftex.def Info: sapienzalogo.pdf  used on input line 118.
@@ -847,52 +847,7 @@ LaTeX Font Warning: Command \Large invalid in math mode on input line 189.
 [4
 
 {/usr/share/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc}]
-
-[5]
-LaTeX Font Info:    Trying to load font information for U+dsrom on input line 257.
- (/usr/share/texmf-dist/tex/latex/doublestroke/Udsrom.fd
-File: Udsrom.fd 1995/08/01 v0.1 Double stroke roman font definitions
-)
-Package microtype Info: Fixing zero \fontdimen 6 for font `U/dsrom/m/n/10.95'
-(microtype)             (new value: 10.95pt) on input line 257.
-Package microtype Info: Fixing zero \fontdimen 6 for font `U/dsrom/m/n/8'
-(microtype)             (new value: 8.0pt) on input line 257.
-Package microtype Info: Fixing zero \fontdimen 6 for font `U/dsrom/m/n/6'
-(microtype)             (new value: 6.0pt) on input line 257.
-
-
-[6]
-Package microtype Info: Fixing zero \fontdimen 6 for font `U/dsrom/m/n/9'
-(microtype)             (new value: 9.0pt) on input line 293.
-Package microtype Info: Fixing zero \fontdimen 6 for font `U/dsrom/m/n/5'
-(microtype)             (new value: 5.0pt) on input line 293.
-
-
-[7]
-
-[8]
-Chapter 4.
-
-
-[9
-
-]
-
-[10]
-Chapter 5.
-
-Overfull \hbox (29.0092pt too wide) detected at line 453
-[]
- []
-
-
-
-[11
-
-]
-
-[12]
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 533.
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 211.
  (/usr/share/texmf-dist/tex/latex/lm/t1lmtt.fd
 File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
@@ -901,6 +856,56 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
 
+Overfull \hbox (0.56863pt too wide) in paragraph at lines 222--230
+ [][] 
+ []
+
+
+
+[5]
+LaTeX Font Info:    Trying to load font information for U+dsrom on input line 278.
+ (/usr/share/texmf-dist/tex/latex/doublestroke/Udsrom.fd
+File: Udsrom.fd 1995/08/01 v0.1 Double stroke roman font definitions
+)
+Package microtype Info: Fixing zero \fontdimen 6 for font `U/dsrom/m/n/10.95'
+(microtype)             (new value: 10.95pt) on input line 278.
+Package microtype Info: Fixing zero \fontdimen 6 for font `U/dsrom/m/n/8'
+(microtype)             (new value: 8.0pt) on input line 278.
+Package microtype Info: Fixing zero \fontdimen 6 for font `U/dsrom/m/n/6'
+(microtype)             (new value: 6.0pt) on input line 278.
+
+
+[6]
+Package microtype Info: Fixing zero \fontdimen 6 for font `U/dsrom/m/n/9'
+(microtype)             (new value: 9.0pt) on input line 314.
+Package microtype Info: Fixing zero \fontdimen 6 for font `U/dsrom/m/n/5'
+(microtype)             (new value: 5.0pt) on input line 314.
+
+
+[7]
+
+[8]
+
+[9]
+Chapter 4.
+
+
+[10
+
+]
+
+[11]
+Chapter 5.
+
+Overfull \hbox (29.0092pt too wide) detected at line 474
+[]
+ []
+
+
+
+[12
+
+]
 
 [13]
 
@@ -913,83 +918,85 @@ Package microtype Info: Loading generic protrusion settings for font family
 [17]
 
 [18]
+
+[19]
 Chapter 6.
-<img/benchmark-1000000.png, id=584, 570.933pt x 354.123pt>
+<img/benchmark-1000000.png, id=597, 570.933pt x 354.123pt>
 File: img/benchmark-1000000.png Graphic file (type png)
 <use img/benchmark-1000000.png>
-Package pdftex.def Info: img/benchmark-1000000.png  used on input line 900.
+Package pdftex.def Info: img/benchmark-1000000.png  used on input line 921.
 (pdftex.def)             Requested size: 316.80121pt x 196.50275pt.
 Package microtype Info: Fixing zero \fontdimen 6 for font `U/dsrom/m/n/10'
-(microtype)             (new value: 10.0pt) on input line 901.
+(microtype)             (new value: 10.0pt) on input line 922.
 Package microtype Info: Fixing zero \fontdimen 6 for font `U/dsrom/m/n/7'
-(microtype)             (new value: 7.0pt) on input line 901.
-<img/guess_pcg_10.png, id=586, 886.512pt x 571.8966pt>
+(microtype)             (new value: 7.0pt) on input line 922.
+<img/guess_pcg_10.png, id=599, 886.512pt x 571.8966pt>
 File: img/guess_pcg_10.png Graphic file (type png)
 <use img/guess_pcg_10.png>
-Package pdftex.def Info: img/guess_pcg_10.png  used on input line 907.
+Package pdftex.def Info: img/guess_pcg_10.png  used on input line 928.
 (pdftex.def)             Requested size: 126.7229pt x 81.74918pt.
-<img/guess_pcg_100.png, id=587, 886.512pt x 571.8966pt>
+<img/guess_pcg_100.png, id=600, 886.512pt x 571.8966pt>
 File: img/guess_pcg_100.png Graphic file (type png)
 <use img/guess_pcg_100.png>
-Package pdftex.def Info: img/guess_pcg_100.png  used on input line 914.
+Package pdftex.def Info: img/guess_pcg_100.png  used on input line 935.
 (pdftex.def)             Requested size: 126.7229pt x 81.74918pt.
-<img/guess_pcg_1000.png, id=588, 886.512pt x 571.8966pt>
+<img/guess_pcg_1000.png, id=601, 886.512pt x 571.8966pt>
 File: img/guess_pcg_1000.png Graphic file (type png)
 <use img/guess_pcg_1000.png>
-Package pdftex.def Info: img/guess_pcg_1000.png  used on input line 920.
+Package pdftex.def Info: img/guess_pcg_1000.png  used on input line 941.
 (pdftex.def)             Requested size: 126.7229pt x 81.74918pt.
-<img/guess_pcg_10000.png, id=589, 886.512pt x 571.8966pt>
+<img/guess_pcg_10000.png, id=602, 886.512pt x 571.8966pt>
 File: img/guess_pcg_10000.png Graphic file (type png)
 <use img/guess_pcg_10000.png>
-Package pdftex.def Info: img/guess_pcg_10000.png  used on input line 928.
+Package pdftex.def Info: img/guess_pcg_10000.png  used on input line 949.
 (pdftex.def)             Requested size: 126.7229pt x 81.74918pt.
-<img/guess_pcg_100000.png, id=590, 886.512pt x 571.8966pt>
+<img/guess_pcg_100000.png, id=603, 886.512pt x 571.8966pt>
 File: img/guess_pcg_100000.png Graphic file (type png)
 <use img/guess_pcg_100000.png>
-Package pdftex.def Info: img/guess_pcg_100000.png  used on input line 935.
+Package pdftex.def Info: img/guess_pcg_100000.png  used on input line 956.
 (pdftex.def)             Requested size: 126.7229pt x 81.74918pt.
 File: img/guess_pcg_100000.png Graphic file (type png)
 <use img/guess_pcg_100000.png>
-Package pdftex.def Info: img/guess_pcg_100000.png  used on input line 942.
+Package pdftex.def Info: img/guess_pcg_100000.png  used on input line 963.
 (pdftex.def)             Requested size: 126.7229pt x 81.74918pt.
-<img/guess_pcg_combined.png, id=591, 886.512pt x 571.8966pt>
+<img/guess_pcg_combined.png, id=604, 886.512pt x 571.8966pt>
 File: img/guess_pcg_combined.png Graphic file (type png)
 <use img/guess_pcg_combined.png>
-Package pdftex.def Info: img/guess_pcg_combined.png  used on input line 951.
+Package pdftex.def Info: img/guess_pcg_combined.png  used on input line 972.
 (pdftex.def)             Requested size: 336.60242pt x 217.13971pt.
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 
 
-[19
+[20
 
  <./img/benchmark-1000000.png>]
 
-[20 <./img/guess_pcg_10.png> <./img/guess_pcg_100.png> <./img/guess_pcg_1000.png> <./img/guess_pcg_10000.png> <./img/guess_pcg_100000.png> <./img/guess_pcg_combined.png>]
+[21 <./img/guess_pcg_10.png> <./img/guess_pcg_100.png> <./img/guess_pcg_1000.png> <./img/guess_pcg_10000.png> <./img/guess_pcg_100000.png> <./img/guess_pcg_combined.png>]
 
-[21]
+[22]
 Chapter 7.
-
-
-[22
-
-]
-Chapter 8.
-<img/UML.png, id=621, 954.6867pt x 396.0396pt>
-File: img/UML.png Graphic file (type png)
-<use img/UML.png>
-Package pdftex.def Info: img/UML.png  used on input line 1032.
-(pdftex.def)             Requested size: 395.99821pt x 254.63683pt.
 
 
 [23
 
+]
+Chapter 8.
+<img/UML.png, id=635, 954.6867pt x 396.0396pt>
+File: img/UML.png Graphic file (type png)
+<use img/UML.png>
+Package pdftex.def Info: img/UML.png  used on input line 1049.
+(pdftex.def)             Requested size: 395.99821pt x 254.63683pt.
+
+
+[24
+
  <./img/UML.png>]
 
-[24] (./main.bbl)
+[25] (./main.bbl)
 
-[25
+[26
 
 
 ] (./main.aux)
@@ -998,21 +1005,21 @@ LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
  ***********
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 7475963971FFA4D2B454511C64DAC122;5076.
+(rerunfilecheck)             Checksum: 2370EFC5DFCE07703BBC1E4CC007EC59;5284.
  ) 
 Here is how much of TeX's memory you used:
- 21292 strings out of 475171
- 350211 string characters out of 5767094
+ 21303 strings out of 475171
+ 350394 string characters out of 5767094
  825267 words of memory out of 5000000
- 43388 multiletter control sequences out of 15000+600000
- 712125 words of font info for 267 fonts, out of 8000000 for 9000
+ 43393 multiletter control sequences out of 15000+600000
+ 712214 words of font info for 268 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  84i,22n,131p,1001b,699s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf-dist/fonts/type1/public/doublestroke/dsrom10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmbx8.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmbxi10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmcsc10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmex10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmmi8.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmr10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmr17.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmr6.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmr7.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmr8.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmr9.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmri10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmss10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmss17.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmssbx10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmsy8.pfb></usr/share/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on main.pdf (30 pages, 2345842 bytes).
+Output written on main.pdf (31 pages, 2348994 bytes).
 PDF statistics:
- 833 PDF objects out of 1000 (max. 8388607)
- 717 compressed objects within 8 object streams
- 274 named destinations out of 1000 (max. 500000)
- 90966 words of extra memory for PDF output out of 106986 (max. 10000000)
+ 848 PDF objects out of 1000 (max. 8388607)
+ 731 compressed objects within 8 object streams
+ 278 named destinations out of 1000 (max. 500000)
+ 90974 words of extra memory for PDF output out of 106986 (max. 10000000)
 
