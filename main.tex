@@ -117,30 +117,30 @@
 \maketitle
 
 \begin{abstract}
-"Don’t be overwise; fling yourself straight into life, without deliberation; don’t be afraid - the flood will bear you to the bank and set you safe on your feet again." Fyodor Dostoevsky
+  TODO
 \end{abstract}
 
 \tableofcontents
 
 \mainmatter
 \chapter{Introduction}
-\lettrine[lines=2, findent=3pt, nindent=0pt]{I}{}n the field of probabilistic password-guessing models, evaluating a password's resistance to guessing attacks requires estimating its \textit{guess number}. The guess number represents how many attempts an attacker would need, on average, before generating or matching a given password. 
-
-Computing this quantity exactly is infeasible for modern probabilistic models, as the password space is extremely large. For this reason, Monte Carlo estimation is employed to obtain an approximate rank without enumerating the full distribution. However, Monte Carlo estimation places strong computational requirements on the sampling procedure, which often becomes a bottleneck in practice.
-
-The MAYA framework builds upon Monte Carlo methods to evaluate password-guessing models efficiently. Monte Carlo techniques, especially those derived from Dell'Amico and Filippone~\cite{ref:dellamico}, offer effective rank estimation but require very large sample sizes to achieve stable accuracy. This, in turn, demands highly efficient sampling and memory management.
-
-During the development of this thesis, the primary challenge was to optimize MAYA’s sampling system used in the Fast, Lean and Accurate (FLA) password model. The original implementation relied heavily on Python data structures, which resulted in excessive memory usage due to object overhead. Because sampling dominates the cost of Monte Carlo estimation, reducing memory consumption and execution time became essential for enabling larger sample sizes and faster evaluations.
-
-This thesis presents several contributions aimed at improving the efficiency of password rank estimation:
-
+\lettrine[lines=2, findent=3pt, nindent=0pt]{I}{}n the field of probabilistic password-guessing models, evaluating a password's resistance to guessing attacks requires estimating its \textit{guess number}.
+This practice is very important since passwords are and will be for the foreseable future the most common human authentication method\cite{}, and humans tend to use weak patterns for simplicity reasons\cite{}, therefore research in this field has focused on how to define if a password is secure or not, so that we can distringuish a weak password from a strong one in a reliable manner.
+We do this by measuring the guessability of a password, the higher the guessability the more difficult it will be to guess a password therefore rendering it much more secure.
+To do this we have to study the POV of the attackers, this is what MAYA~\cite{ref:maya} does, it defines an extensible framework for testing Models on this matter. 
+The guess number represents the expected number of attempts an attacker would need to generate or match a specific password.
+In recent years, there has been a rise in Generative Password-guessing Models some of which can be seen in MAYA such as: FLA~\cite{ref:fla}, PassGAN~\cite{ref:passgan}, PassGPT~\cite{ref:passgpt}, PLRGAN~\cite{ref:pasquini}, and the PassLLM framework~\cite{ref:pwdguessllm}. These models aim to learn complex human password patterns to improve guessing efficiency. The standard method for evaluating these models involves generating a \textit{top-k} list of probable passwords and comparing them against a testing dataset.
+However, this evaluation approach introduces a significant computational challenge. Generating and maintaining this \textit{top-k}\footnote{Not all models generate the top-k(e.g. GAN like models), only explicit models do this.} list requires processing an enormous set of passwords, which imposes severe memory demands. As noted in MAYA~\cite{ref:maya} and FLA~\cite{ref:fla}, this memory bottleneck often necessitates high-performance computing (HPC) resources, making standard evaluation intractable.
+One potential alternative is to use Monte Carlo estimation~\cite{ref:dellamico} to approximate model performance. However, the accuracy of Monte Carlo estimation has not been rigorously proven for all ranges of guess numbers, particularly for rare passwords.
+Currently, the MAYA implementation of the FLA \textit{get\_topk} routine suffers from significant "object overhead." This inefficiency renders the model un-evaluatable in standard environments (e.g., machines with less than 200 GB of RAM) when attempting sample sizes of $N=5.0\cdot 10^8$. 
+This thesis addresses this scalability limitation by replacing the standard sampling logic with a custom Heap data structure implemented in Cython. This solution eliminates the Python object overhead and achieves an $\sim87.47\%$ improvement in memory efficiency compared to the baseline implementation. Consequently, this optimization enables evaluations with sample sizes exceeding $N=5.0\cdot10^8$ on standard hardware. Furthermore, by enabling the processing of larger sample sizes, this work allows for the empirical verification of Monte Carlo estimations at a scale previously unattainable.\section{Contributions}
+This allowed us to verify Monte Carlo up to $5\cdot10^8$ while using just 30GB of RAM.
 \begin{itemize}
     \item An implementation of a Cython-based optimized heap item (\texttt{heap-item}), which reduces memory consumption while maintaining compatibility with Python's \texttt{heapq} module.
     \item A custom heap implementation (\texttt{heapcy}), designed to maximize performance by storing only file offsets rather than full strings, resulting in significant memory savings and faster operations.
     \item An integration of these optimizations into the MAYA framework to improve Monte Carlo rank estimation.
     \item A large-scale Monte Carlo experiment demonstrating that evaluation-estimation remains reliable up to $x = 5 \cdot 10^8$, far beyond the $10^7$ tested in the original FLA paper.
 \end{itemize}
-
 The remainder of this thesis is structured as follows. Chapter~2 presents the motivation for this work, discussing the importance of password strength evaluation and the limitations of existing sampling approaches. Chapter~3 provides background material and an overview of related work in password-guessing models and Monte Carlo estimation. Chapter~4 describes the methodology and the proposed optimizations in detail. Chapter~5 explains the experimental setup used for evaluating the new implementations. Chapter~6 presents and analyzes the results. Finally, Chapter~7 concludes the thesis and outlines directions for future research.
 \chapter{Motivation}
 \label{chap:2}
@@ -148,12 +148,12 @@ Human-chosen passwords remain one of the most widely used authentication mechani
 
 Modern password-guessing models estimate the probability of strings and generate guesses in decreasing likelihood order. A password's \textit{guess number} is defined as the number of guesses an attacker would need before encountering it in this ranked list. Determining this value exactly is infeasible for models with exponentially large output spaces. Monte Carlo estimation offers a tractable alternative, providing unbiased estimates of guess numbers without requiring full enumeration.
 
-However, Monte Carlo estimation imposes significant computational demands. Accurate estimation requires very large sample sizes, often on the order of millions or tens of millions of generated passwords. Since each sample requires updating heap structures, memory footprint and sampling speed become the primary bottlenecks in frameworks such as MAYA.
+However, Monte Carlo estimation verification imposes significant computational demands. Verification requires very large sample sizes, in the order of billions of generated passwords. Since each sample requires updating heap structures, memory footprint and sampling speed become the primary bottlenecks in frameworks such as MAYA.
 Monte Carlo also has a problem when estimating low probability passwords, as demonstrated in \cite{ref:stanek}  there are ways to mitigate it, but they were not implemented in this thesis since they do not change the final result very much.
 
 The Fast, Lean and Accurate (FLA) model is specifically designed to operate under strict memory and latency constraints. Its efficiency makes it suitable for client-side password-strength estimation. Nevertheless, its Python-based sampling system in MAYA suffers from high memory usage due to Python object overhead, which limits the size of the evaluation size and slows down the evaluation process.
 
-The motivation behind this thesis is to extend the scalability of Monte Carlo estimation for password-guessing models by optimizing the underlying sampling mechanism. By designing more memory-efficient heap structures and reducing Python overhead through Cython, we enable substantially larger sample sizes and faster evaluation, both of which improve the accuracy and practicality of password-strength modeling.\chapter{Background and Related Work}
+The motivation behind this thesis is to extend the scalability of Monte Carlo estimation for password-guessing models by optimizing the underlying sampling mechanism. By designing more memory-efficient heap structures and reducing Python overhead through Cython, we enable substantially larger sample sizes and faster evaluation, both of which help us verify the accuracy and practicality of password-strength modeling.\chapter{Background and Related Work}
 \label{chap:3} 
 \section{Monte Carlo Estimation}
 \label{sec:montecarlo}
@@ -195,7 +195,7 @@ We first define compiler directives (starting with \#). These tell the compiler 
 Cython provides three types of function declarators:
 
 \begin{itemize}
-  \item \textbf{cdef}: Defines a C-only function. These are very fast but cannot be called from external Python code. By default, they act like standard Python functions and hold the \href{https://wiki.python.org/moin/GlobalInterpreterLock}{GIL}\footnote{The Global Interpreter Lock is a Python feature which was introduced to eliminate race conditions in parallel operations on objects, Python needs it because objects are tracked by the Garbage collector by keeping count of the references of said object when the references reach 0 then the garbage collector frees memory, if there are parallel operations on the same object this could lead to an early free inducing a use after free, or race conditions}, allowing access to Python objects. However, if defined with \texttt{nogil} (e.g., \texttt{cdef void func() nogil:}), they release the GIL; in this mode, Python structures cannot be accessed.
+  \item \textbf{cdef}: Defines a C-only function. These are very fast but cannot be called from external Python code. By default, they act like standard Python functions and hold the \href{https://wiki.python.org/moin/GlobalInterpreterLock}{GIL}\footnote{The Global Interpreter Lock is a Python feature which was introduced to eliminate race conditions in parallel operations on objects, Python needs it because objects are tracked by the Garbage collector by keeping count of the references of said object when the references reach 0 then the garbage collector frees memory, if there are parallel operations on the same object this could lead to an early free inducing a use after free, or race conditions, we resolve this by using the GIL which makes each operation on objects one thread only thus preventing the majority of problems from arising.}, allowing access to Python objects. However, if defined with \texttt{nogil} (e.g., \texttt{cdef void func() nogil:}), they release the GIL; in this mode, Python structures cannot be accessed.
     
     \item \textbf{cpdef}: Creates two versions of the function: a C version for use within Cython and a Python wrapper for external use. This offers the best of both worlds but introduces slight overhead compared to pure \texttt{cdef}.
     
@@ -343,20 +343,28 @@ They can be separated into 2 types:
 
 
 \section{Previous Works}
-\subsection{Classical Works}
-\subsubsection{Fast Accurate And Lean(FLA)}
+\subsection{Fast Accurate And Lean(FLA)}
 FLA is an LSTM model that is used to guess passwords and study how effective an attacker might be at cracking passwords.
 As evidenced in \cite{ref:fla} the model is very good at guessing passwords compared to PCFGs, Markov Models and more heuristic methods like John The ripper.
 Although in recent years there has been a development in to password guessing, as in the emergence of new kinds of model like: RFGuess \cite{ref:rfguess}, PASS LLM \cite{ref:pwdguessllm} etc...
 The authors of FLA have done an excellent job at making it very "lean" so that it can  run easily on the client side, making it a really good model for password strength metering on the client-side which was a novel idea at the time.
 They also used Monte Carlo estimation\cite{ref:dellamico} to efficiently look at how many guesses it would take to guess all of the test dataset \cite{ref:fla}, and proved reliability up to $10^7$.
-\subsection{Modern}
-\subsubsection{Password Guessing With LLMs}
+
+\subsection{Stanek}
+In Stanek's paper \cite{ref:stanek} they improved the Monte Carlo Estimation  of the Rank of Passwords by employing different methods: 
+they first addressed the precision problem with two ideas: 
+\begin{enumerate}
+  \item \textbf{Linear Interpolation} We take the passwords in rank intervals and apply linear Interpolation\footnote{ Linear Interpolation is a common technique used to lower the variance of a Monte Carlo Estimation https://www.math.hkust.edu.hk/~machas/scientific-computing.pdf}, this will give us results with lower variance.
+  \item \textbf{Uniqueness post-sampling} After sampling we sample until there are no repeated probabilities, and substitute them with a frequency. %todo explain better
+\end{enumerate}
+They then proceded to address the speed problem, with the idea of separating the probabilities in buckets
+
+\subsection{Password Guessing With LLMs}
 As seen in \cite{ref:pwdguessllm} they brought forward the concept of using LLMs for password guessing and obtained really good results in the evaluation of guesses.
 These LLMs can get to higher guessing numbers much faster than previous implementations, instead of previous models.
-
 \label{sec:background}
-
+\subsection{MAYA}
+MAYA's framework introduces a standardized and extensible framework to test models
 
 
 \chapter{Methodology}
@@ -681,7 +689,7 @@ If the arrays were not saved as tensors they will be saved so that future runs m
 \begin{algorithm}[H]
     \SetKwInOut{Input}{Input}
     \SetKwInOut{Output}{Output}
-
+    \BlankLine
     \underline{function ComputeCurveStats} $(path)$\;
     \Input{Path to raw Monte Carlo samples}
     \Output{Tensor $A$ (sorted probs), Tensor $C$ (cumulative cost)}
@@ -710,96 +718,16 @@ If the arrays were not saved as tensors they will be saved so that future runs m
     \label{algo:readcsv}
 \end{algorithm}
 
-\vspace{1em}
 
-% --- ALGORITHM: The Writer (Write MC File) ---
-\begin{algorithm}[H]
-    \SetKwInOut{Input}{Input}
-
-    \underline{function SaveCurve} $(path, A, C)$\;
-    \Input{Output path, Tensors $A$ and $C$}
-    
-    Open file at $path$ for writing\;
-    \ForEach{index $i$ in $A$}{
-        \tcp{Write tuple (probability, expected\_guesses)}
-        Write row $(A[i], C[i])$ to file\;
-    }
-    \caption{Serializes the computed curve to disk}
-    \label{algo:writemc}
-\end{algorithm}
 \subsubsection{tester}
     
-\begin{algorithm}[H]
-    \SetKwInOut{Input}{Input}
-    \SetKwFunction{Load}{LoadCheckpoint}
-    \SetKwFunction{Train}{StartTrain}
-    \SetKwFunction{Sample}{SampleModel}
-    \SetKwFunction{Post}{PostSampling}
-    \SetKwFunction{GetTest}{GetTestDataset}
-    \SetKwFunction{GetTopK}{GetGeneratorFromTopK} % Added this function
-    \SetKwFunction{MCTest}{MonteCarloTest}
-
-    \underline{function StartMonteCarloTest} $(Name_{ckpt})$\;
-    \Input{Name of the checkpoint $Name_{ckpt}$}
-    
-    \tcp{1. Model State Management}
-    \vspace{0.5em}
-    $Path_{file} \leftarrow \text{JoinPaths}(Dir_{ckpt}, Name_{ckpt})$\;
-    $Loaded \leftarrow$ \Load{$Path_{file}$}\;
-    
-    \If{\textbf{not} $Loaded$}{
-        Print "Checkpoint missing, starting training..."\;
-        \Train{$Name_{ckpt}$}\;
-        \Load{$Path_{file}$}\;
-    }
-    Print "Checkpoint loaded successfully."\;
-
-    \BlankLine
-    \tcp{2. Prepare Baseline Samples (Top-K)}
-    \vspace{0.5em}
-    $P_{topk} \leftarrow$ "topk\_guesses\_str\_float.gz"\;
-    $\mathcal{E} \leftarrow \text{InitEval}(N_{samples})$\;
-    
-    \If{File at $P_{topk}$ does not exist}{
-        Ensure directory exists\;
-        $Generator \leftarrow$ \Sample{$0, \mathcal{E}$}\;
-        
-        Open $P_{topk}$ for writing\;
-        \ForEach{$(pwd, prob)$ in $Generator$}{
-            Write "$pwd \ prob$" to $P_{topk}$\;
-        }
-        Verify total lines written equals $N_{samples}$\;
-        \Post{$\mathcal{E}$}\;
-    }
-
-    \BlankLine
-    \tcp{3. Select Iterator Source and Execute}
-    \vspace{0.5em}
-    \eIf{Config.TestTopK \textbf{is true}}{
-        \tcp{Use the Top-K file generated above}
-        $Iterator \leftarrow$ \GetTopK{$P_{topk}, Device$}\;
-    }{
-        \tcp{Use the full test dataset (default)}
-        $Iterator \leftarrow$ \GetTest{}\;
-    }
-    
-    \BlankLine
-    $t_{start} \leftarrow \text{Time}()$\;
-    
-    \MCTest{$\mathcal{E}, Iterator$}\;
-    
-    $t_{delta} \leftarrow \text{Time}() - t_{start}$\;
-    Print "Test completed in: " $t_{delta}$\;
-
-    \caption{Orchestrator for Monte Carlo Testing Session}
-    \label{algo:start_mc_test}
-\end{algorithm}
 \begin{algorithm}[H]
     \SetKwInOut{Input}{Input}
     \SetKwInOut{Output}{Output}
     \SetKwFunction{BuildCurve}{BuildMCCurve}
     \SetKwFunction{Search}{BinarySearch}
 
+    \BlankLine
     \underline{function MonteCarloTest} $(\mathcal{E}, \mathcal{T})$\;
     \Input{Config $\mathcal{E}$, Test Iterator $\mathcal{T}$ (pairs of $pwd, prob$)}
     \Output{CSV file with estimated ranks $\hat{r}$}
@@ -838,22 +766,7 @@ If the arrays were not saved as tensors they will be saved so that future runs m
     % -------------------------------------------------------
     % Function 1: Loading the Data
     % -------------------------------------------------------
-    \underline{function LoadGuessNumbers} $(path)$\;
-    \Input{Path to Monte Carlo CSV results}
-    \Output{Sorted list of guess numbers $G$}
-    
-    \tcp{1. Parse rank estimates from file}
-    \vspace{0.3em}
-    $RawRows \leftarrow$ Read CSV at $path$\;
-    $G \leftarrow$ Extract column \texttt{rank\_hat} from $RawRows$\;
-    
-    \tcp{2. Sort ascending for binary search (CDF)}
-    \vspace{0.3em}
-    $G \leftarrow \text{SortAscending}(G)$\;
-    \Return $G$\;
-    \BlankLine
-    \hrule
-    \BlankLine
+        \BlankLine
 
     % -------------------------------------------------------
     % Function 2: The Core Math (Binning & CDF)
@@ -925,7 +838,6 @@ If the arrays were not saved as tensors they will be saved so that future runs m
     \caption{Monte Carlo Guessing Curve Analysis}
     \label{algo:guessing_curve}
 \end{algorithm}
-
 \subsection{Caching step}
 To test the estimation for the evaluation we need to first take the test-dataset and for each 
 password we need to get the probability of it being generated by the model and for good purposes, we should also sort all of it. To do that, we employ our \texttt{heapcy}, which makes this process much less memory intensive. We then write everything to a compressed file, if so that we do not need to generate it every time, the problem stems from the fact that for each time 
@@ -933,85 +845,10 @@ the model is trained we need to do this generation since the model could have ch
 work in batches to get the probability of multiple passwords at the same time, and to write into a file.
 same with the heap, we could maybe work with multiple heaps and then merge them together into one, when finished, all of course using batches and the gpu.
 
-\vspace{1em}
-\SetKwInOut{Input}{Input}
-\SetKwInOut{Output}{Output}
-\begin{algorithm}[H]
-    \SetKwFunction{GenSorted}{GenerateSortedTestSet}
-    
-    \underline{function GetTestDataset} $()$\;
-    \Output{Stream of $(pwd, prob)$ tuples}
-    
-    $Path \leftarrow$ "test\_dataset.csv.gz"\;
-    
-    \If{File at $Path$ does not exist}{
-        \tcp{Expensive generation step}
-        $Stream \leftarrow$ \GenSorted{}\;
-        
-        Open $Path$ for writing (compressed)\;
-        \While{$Stream$ is not empty}{
-            Write batch from $Stream$ to $Path$\;
-        }
-    }
-    
-    \tcp{Yield from the cached file}
-    \vspace{0.5em}
-    \Return Stream reading from $Path$\;
-    
-    \caption{Cached Test Dataset Retrieval}
-    \label{algo:get_dataset}
-\end{algorithm}
-
-\vspace{1em}
-
-% --- ALGORITHM 3: The Core Generator (Heap Sort) ---
-\begin{algorithm}[H]
-    \SetKwInOut{Input}{Input}
-    \SetKwFunction{CalcProb}{GetProbability}
-    
-    \underline{function GenerateSortedTestSet} $()$\;
-    \Input{List of test passwords $P_{test}$}
-    \Output{Generator yielding passwords sorted by probability}
-    
-    $\mathcal{H} \leftarrow$ New Min-Heap\;
-    $Tmp \leftarrow$ Create temporary binary file\;
-    
-    \tcp{Phase 1: Calculate and Index}
-    \vspace{0.5em}
-    \ForEach{$pwd$ in $P_{test}$}{
-        \If{$pwd$ is valid}{
-            $offset \leftarrow Tmp$.tell()\;
-            $prob \leftarrow$ \CalcProb{$pwd$}\;
-            
-            \tcp{Store raw data on disk}
-            Write $(pwd, prob)$ to $Tmp$\;
-            
-            \tcp{Store index in RAM (prob, file\_offset)}
-            $\mathcal{H}$.Push($(prob, offset)$)\;
-        }
-    }
-    
-    \tcp{Phase 2: Sort and Retrieve}
-    \vspace{0.5em}
-    $SortedOffsets \leftarrow$ Extract $N$ largest from $\mathcal{H}$\;
-    Clear $\mathcal{H}$ from memory\;
-    
-    \ForEach{$offset$ in $SortedOffsets$}{
-        Seek $Tmp$ to $offset$\;
-        Read $(pwd, prob)$ from $Tmp$\;
-        \textbf{yield} $(pwd, prob)$\;
-    }
-    
-    \tcp{Cleanup runs in finally block}
-    \vspace{0.5em}
-    Delete $Tmp$\;
-
-    \caption{External Sort for Probability Dataset}
-    \label{algo:gen_sorted}
-\end{algorithm}
 
 \chapter{Results and Analysis}
 \label{chap:6}
+\subsection{Optimizing FLA}
 \section{Figures}
      \begin{figure}[h!]
      \centering
@@ -1021,6 +858,28 @@ same with the heap, we could maybe work with multiple heaps and then merge them 
      \caption{Comparative analysis of memory consumption across the three sampling strategies for a batch of $10^6$ items. The \texttt{heapcy} (Custom-heap) implementation demonstrates a $\sim87.47\%$ reduction in memory usage compared to the baseline \texttt{Pure Python} approach. This drastic drop is attributed to the file-offset mechanism (Section \ref{customheap}), which eliminates the overhead of storing string objects in RAM The reduction in memory is not only an efficiency gain it changes the problem class from 'requires a supercomputer' to 'runs on a laptop'.}
      \label{fig:1}
  \end{figure}
+
+\begin{table}[h!tbp]
+    \renewcommand{\thetable}{\arabic{table}} % Removes the chapter prefix (e.g., "5.")
+    \setcounter{table}{0}                   % Resets the counter to 0
+    \centering
+    \begin{tabular}{l|c|c|c}
+         \toprule
+         \#Item & Pure Python &  Heap Item & Heapcy \\
+         \midrule
+         \rowcolor{lightgray}
+         $10^6$ &  127.72 & 51.36 & 16.00\\
+         $10^5$ & 12.77 & 5.13 & 1.60\\
+         \bottomrule
+    \end{tabular}
+    \caption{Size occupied in MB for $10^x$  amount of items by each implementation, this tells us how good the optimizations are instead of the old implementation}
+    \label{tab:1}
+\end{table}
+As can be seen the gains have the same rate at any amount of items, so by using 10x the amount of items we will have 10x the amount of memory used.
+
+
+\subsection{Evaluating Monte Carlo}
+
 \begin{figure}[h!tbp]
 \begin{subfigure}[b]{0.32\textwidth}
      \centering
@@ -1067,31 +926,13 @@ same with the heap, we could maybe work with multiple heaps and then merge them 
 \begin{figure}[h!]
     \centering
        \renewcommand{\thefigure}{\arabic{figure}} % Removes the chapter prefix (e.g., "5.")
-    \setcounter{figure}{2}      
+    \setcounter{figure}{1}      
     \includegraphics[width=0.85\linewidth]{img/guess_pcg_combined.png}
-    \caption{Convergence of the Monte Carlo rank estimation as the sample size $|\Theta|$ increases. Subfigures (a) through (d) illustrate that at lower sample sizes ($10^1 - 10^3$), the estimation exhibits high variance (noise). As $|\Theta|$ approaches $10^5$ and $10^6$ (f), the curve stabilizes, confirming that the memory optimizations allow for sample sizes large enough to produce deterministic-like accuracy.}
+    \caption{Convergence of the Monte Carlo rank estimation as the sample size $|\theta|$ increases.
+Subfigures $(a)$ through $(d)$illustrate that at lower sample sizes $(10^1,10^2,10^3)$, the estimation exhibits high variance (noise). As $|\Theta|$ approaches $10^5$and $10^6$ (f), the curve stabilizes confirming that sample sizes large enough produce deterministic like accuracy.}
     \label{fig:3}
 \end{figure}
 \FloatBarrier
-\pagebreak
-\section{Tables}
-\begin{table}[h!tbp]
-    \renewcommand{\thetable}{\arabic{table}} % Removes the chapter prefix (e.g., "5.")
-    \setcounter{table}{0}                   % Resets the counter to 0
-    \centering
-    \begin{tabular}{l|c|c|c}
-         \toprule
-         \#Item & Pure Python &  Heap Item & Heapcy \\
-         \midrule
-         \rowcolor{lightgray}
-         $10^6$ &  127.72 & 51.36 & 16.00\\
-         $10^5$ & 12.77 & 5.13 & 1.60\\
-         \bottomrule
-    \end{tabular}
-    \caption{Size occupied in MB}
-    \label{tab:1}
-\end{table}
-As can be seen the gains have the same rate at any amount of items, so by using 10x the amount of items we will have 10x the amount of memory used.
 
 \begin{table}[htbp]
 \renewcommand{\thetable}{\arabic{table}} % Removes the chapter prefix (e.g., "5.")
@@ -1123,10 +964,12 @@ $2.5 \cdot 10^8$ & $59.84\%$ &$54.45\%$ & $54.74\%$ & $54.92\%$ & $54.85\%$ & $5
 $5.0 \cdot 10^8$ & $59.84\%$ &$61.87\%$ & $60.45\%$ & $60.65\%$ & $60.35\%$ & $60.42\%$ & $60.47\%$ \\
  \bottomrule
 \end{tabular}
-\caption{Stability of the Guessing Percentage ($G(x)$) across varying Monte Carlo sample sizes. The data indicates that while estimates for high-probability passwords stabilize quickly (at $|\Theta|=10^4$), accurate estimation for lower-probability tails (higher Guess Numbers) requires the massive sample sizes ($|\Theta| \geq 10^6$).}
+\caption{Stability of the Guessing Percentage (G(x)) across varying Monte Carlo sample
+sizes. The data indicates that even at low samples $10^4$ the results are close enough to
+the deterministic ones.}
 \label{tab:2}
-
 \end{table}
+
 \chapter{Conclusion}
 \label{chap:7}
 In Conclusion we managed to optimize the sampling of FLA, added montecarlo to MAYA and we proved with results how the montecarlo estimation is very good at estimating the evaluation.
@@ -1173,11 +1016,14 @@ We could also improve the heapcy implementation to have a dynamic memory instead
 \backmatter
 \phantomsection
 % This tells LaTeX which style to use. 
-% The 'sapthesis' class document (cited in your file) likely provides this style.
+% The 'sapthesis' class document
 \bibliographystyle{sapthesis} 
 
 % This tells LaTeX to use the .bib file you just created.
 % (If you named it "references.bib", use "references")
 \bibliography{refs}
+
+\section{Acknowledgements}
+"Don’t be overwise; fling yourself straight into life, without deliberation; don’t be afraid - the flood will bear you to the bank and set you safe on your feet again." Fyodor Dostoevsky
 
 \end{document}

@@ -1,4 +1,4 @@
-\begin{thebibliography}{1}
+\begin{thebibliography}{10}
 
 \bibitem{ref:maya}
 \textsc{Corrias, W., De~Gaspari, F., Hitaj, D., and Mancini, L.~V.}
@@ -12,6 +12,12 @@
 \newblock Monte carlo strength evaluation: Fast and reliable password checking.
 \newblock In \emph{Proceedings of the 22nd {ACM} Conference on Computer and Communications Security ({CCS}'15)}. ACM Press (2015).
 \newblock Available from: \url{https://dl.acm.org/doi/pdf/10.1145/2810103.2813631}.
+
+\bibitem{ref:passgan}
+\textsc{Hitaj, B., Gasti, P., Ateniese, G., and Perez-Cruz, F.}
+\newblock Passgan: A deep learning approach for password guessing.
+\newblock In \emph{Proceedings of the 17th International Conference on Applied Cryptography and Network Security ({ACNS} 2019)}, pp. 217--237. Springer (2019).
+\newblock Available from: \url{https://link.springer.com/chapter/10.1007/978-3-030-21568-2_11}.
 
 \bibitem{ref:loeve}
 \textsc{Loève, M.}
@@ -30,6 +36,18 @@
 \newblock Recurrent neural networks: A comprehensive review of architectures, variants, and applications.
 \newblock \emph{Information}, \textbf{15} (2024).
 \newblock Available from: \url{https://www.mdpi.com/2078-2489/15/9/517}.
+
+\bibitem{ref:pasquini}
+\textsc{Pasquini, D., Gangwal, A., Ateniese, G., Bernaschi, M., and Conti, M.}
+\newblock Improving password guessing via representation learning.
+\newblock In \emph{Proceedings of the 42nd IEEE Symposium on Security and Privacy ({ SP} 2021)}, pp. 1382--1399. IEEE (2021).
+\newblock Available from: \url{https://ieeexplore.ieee.org/document/9519441}.
+
+\bibitem{ref:passgpt}
+\textsc{Rando, J., Perez-Cruz, F., and Hitaj, B.}
+\newblock Passgpt: Password modeling and (guided) generation with large language models.
+\newblock In \emph{Proceedings of the 28th European Symposium on Research in Computer Security ({ESORICS} 2023)}, pp. 164--183. Springer (2023).
+\newblock Available from: \url{https://link.springer.com/chapter/10.1007/978-3-031-51479-1_9}.
 
 \bibitem{ref:stanek}
 \textsc{Stanek, M.}
