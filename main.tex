@@ -160,7 +160,7 @@ Modern probabilistic password-guessing models assign a probability to each possi
 
 Monte Carlo estimation offers a practical approximation to this problem. Instead of fully enumerating the model’s distribution, one draws a sample from the model and uses importance-weighted estimation techniques~\cite{ref:dellamico} to approximate guess numbers. While Monte Carlo is unbiased and effective in theory, its accuracy—especially for low-probability (long-tail) passwords—depends strongly on the size of the sample. Prior work has shown that variance decreases with larger samples, but validating Monte Carlo at large scales has historically been limited by computational constraints rather than by the method itself.
 
-A practical difficulty arises from the sampling mechanism required to build Monte Carlo estimates. Each sampled password must be stored together with its probability, sorted, and processed to construct the estimation curve. In frameworks such as MAYA, this procedure is implemented using Python data structures, which incur substantial object overhead and memory fragmentation. As a result, sampling large sets—on the order of hundreds of millions of items—quickly becomes infeasible on standard hardware.
+A practical difficulty arises from the sampling mechanism required to verify Monte Carlo estimates. Each sampled password must be stored together with its probability, sorted, and processed to construct the estimation curve. In frameworks such as MAYA, this procedure is implemented using Python data structures, which incur substantial object overhead and memory fragmentation. As a result, sampling large sets—on the order of hundreds of millions of items—quickly becomes infeasible on standard hardware.
 
 The Fast, Lean and Accurate (FLA) model is designed for efficiency and is lightweight enough for client-side deployment. However, when evaluated within MAYA, its Python-based sampling pipeline suffers from the same memory limitations that affect other explicit probabilistic models. The overhead associated with storing millions of Python strings, floats, and tuples restricts the maximum feasible sample size, thereby limiting the ability to study Monte Carlo estimation at the scales needed to assess its stability for password-strength evaluation.
 
@@ -172,7 +172,7 @@ P.P.Ms are a necessary part of a modern login security system they are needed to
 since today's attackers also use these models to crack passwords more efficiently.
 When defending they evaluate the strength of a given password by telling you how many attempts it would take to guess it this is known as the \textbf{ Rank } of a password, the higher the rank the more secure the password.
 Attackers prefer to use these models instead of brute forcing.
-We could use optimized versions like \href{https://www.openwall.com/john/}{ John The Ripper }, which speed up the brute forcing job but are still very slow compared to these models.
+We could use optimized versions like John The Ripper\footnote{\url{https://www.openwall.com/john/}}, which speed up the brute forcing job but are still very slow compared to these models.
 These probabilistic models instead rely on something else, after training we take all of the tuples of 
 
 \begin{enumerate}
@@ -267,16 +267,16 @@ The Rank of a password $\alpha$ is defined as such:
 \end{equation}
 The Rank of a password $\alpha$ is defined as such: 
 \begin{equation}
-  R_\mathcal{f}(\alpha) = |\{\beta \mid \beta,p_\beta \in \Gamma \wedge p_\beta > p(\alpha) \wedge f(\beta) \}|
+  R_\f(\alpha) = |\{\beta \mid \beta,p_\beta \in \Gamma \wedge p_\beta > p(\alpha) \wedge f(\beta) \}|
   \label{eq:realrankfiltered}
 \end{equation}
 This shows us that we can filter during sampling as long as we normalize during the sampling not after.
 \subsection{Monte Carlo Rank Estimation}
-Monte Carlo's estimation is usefull in this field \cite{ref:dellamico} because it enables us the confidence of estimating the rank of a password, and by extension how good a model is how does it work? 
+Monte Carlo's estimation is useful in this field \cite{ref:dellamico} because it enables us the confidence of estimating the rank of a password, and by extension how good a model is how does it work? 
 we start by defining a set $\Theta$, it will contain a sample of strings taken from a i.i.d.\footnote{Independently, Identically Distributed we need this because if the distribution is not i.i.d. therefore we will not be able to get accurate estimates} distribution $\Psi$ based on the internal one of the model.
-Furthermore the larger the size of $\Theta$ the better the estimation as proved in \cite{ref:dellamico}, this will help us especially with Low-probability passwords since they have higher variance. 
+Further more the larger the size of $\Theta$ the better the estimation as proved in \cite{ref:dellamico}, this will help us especially with Low-probability passwords since they have higher variance. 
 In this paper, we implemented the version found in \cite{ref:dellamico} without any improvements as seen in \cite{ref:stanek} this has not impacted on the performance of the guess\% estimation.
-To this day we have not found a way to better this variance, the latest attempts have yielded some results in lowering the variance therefore making montecarlo more accurate especially for Low-probability passwords, but they are not good enough yet.
+To this day we have not found a way to better this variance, the latest attempts have yielded some results in lowering the variance therefore making Monte Carlo more accurate especially for Low-probability passwords, but they are not good enough yet.
 We can now Estimate the \textbf{Rank}, we define $\hat{R}(\alpha)$ as the estimation of the Rank for a given password $\alpha$:
 
 \begin{equation}
@@ -289,7 +289,7 @@ We can now Estimate the \textbf{Rank}, we define $\hat{R}(\alpha)$ as the estima
 \end{equation}
 
 \subsection{Efficient Computation of Monte Carlo Estimates}
-This is a good estimation but if we need to estimate a lot of passwords, this will not be fast since each time we need to sample for montecarlo and calculate the rank, so the solution is to precalculate the rank and samples so that we do not need to do it multiple times,
+This is a good estimation but if we need to estimate a lot of passwords, this will not be fast since each time we need to sample for Monte Carlo and calculate the rank, so the solution is to precalculate the rank and samples so that we do not need to do it multiple times,
 so let A be the descending sorted array of probabilities for getting generated by the model for each sampled password, 
 and let C be the array of  the estimated ranks for each password.
 
@@ -344,20 +344,22 @@ The authors of FLA have done an excellent job at making it very "lean" so that i
 They also used Monte Carlo estimation\cite{ref:dellamico} to efficiently look at how many guesses it would take to guess all of the test dataset \cite{ref:fla}, and proved reliability up to $10^7$.
 
 \subsection{Stanek}
-In Stanek's paper \cite{ref:stanek} they improved the Monte Carlo Estimation  of the Rank of Passwords by employing different methods: 
-they first addressed the precision problem with two ideas: 
+In Stanek's paper~\cite{ref:stanek}, the authors improved the Monte Carlo estimation of password ranks by employing different methods. They first addressed the precision problem with two ideas:
+\subsubsection{Precision Problem}
 \begin{enumerate}
-  \item \textbf{Linear Interpolation} We take the passwords in rank intervals and apply linear Interpolation\footnote{ Linear Interpolation is a common technique used to lower the variance of a Monte Carlo Estimation https://www.math.hkust.edu.hk/~machas/scientific-computing.pdf}, this will give us results with lower variance.
-  \item \textbf{Uniqueness post-sampling} After sampling we sample until there are no repeated probabilities, and substitute them with a frequency. %todo explain better
+  \item \textbf{Linear Interpolation:} Passwords are taken in rank intervals and linear interpolation is applied\footnote{Linear interpolation is a common technique used to lower the variance of a Monte Carlo estimation: https://www.math.hkust.edu.hk/~machas/scientific-computing.pdf}. This yields results with lower variance.
+  \item \textbf{Uniqueness post-sampling:} After sampling, the process eliminates repeated probabilities, substituting them with a frequency count. This improves the estimation by removing redundancy from the pool, thereby strengthening the sampling. Intuitively, since Monte Carlo relies on averaging, treating duplicate values as frequencies ensures that the calculation remains efficient while making the resulting average more precise.
 \end{enumerate}
-They then proceded to address the speed problem, with the idea of separating the probabilities in buckets
+However these improvements are not that substantial and they also require more time to implement so in this thesis we choose to implement the version found in ~\cite{ref:dellamico}.
+\subsubsection{Speed Problem}
+They decided to partition password probabilities into logarithmic buckets. This allows for search speeds faster than a binary search, which is particularly beneficial for very large samples. However, we did not implement this method in this thesis, as the marginal time savings did not justify the implementation complexity and it would have added.
 
 \subsection{Password Guessing With LLMs}
 As seen in \cite{ref:pwdguessllm} they brought forward the concept of using LLMs for password guessing and obtained really good results in the evaluation of guesses.
 These LLMs can get to higher guessing numbers much faster than previous implementations, instead of previous models.
 \label{sec:background}
 \subsection{MAYA}
-MAYA's framework introduces a standardized and extensible framework to test models
+MAYA's framework introduces a standardized and extensible framework to test models, this is a strong foundation which has enabled the field to 
 
 
 \chapter{Methodology}
@@ -371,7 +373,7 @@ To address these limitations, we  explore two distinct strategies:
 The first, \textit{Heap-item}, focuses on reducing item size via Cython structs. The second, \textit{Custom-heap}, introduces a file-offset mechanism to eliminate string storage entirely\subsection{Pure Python}
 \label{PurePython}
 The first problem we tackled was the original implementation of FLA's sampling algorithm\cite{ref:fla}, which occupied a significant memory usage due to the usage of pure Python structures such as lists, tuples, strings, and floats.
-The main problem came from the fact that each item was saved as a tuple of str, float, which was appended into a list, and that list was manipulated with the \href{https://docs.python.org/3/library/heapq.html}{heapq} module.
+The main problem came from the fact that each item was saved as a tuple of str, float, which was appended into a list, and that list was manipulated with the heapq\footnote{\url{https://docs.python.org/3/library/heapq.html}} module.
 Figure \ref{fig:1} illustrates the significant memory consumption caused by the original technique.
 Python heap structures store each heap item as a fully-fledged Python object
 (tuple of string and float). This leads to high memory overhead due to:
@@ -395,7 +397,7 @@ We first define compiler directives (starting with \#). These tell the compiler 
 Cython provides three types of function declarators:
 
 \begin{itemize}
-  \item \textbf{cdef}: Defines a C-only function. These are very fast but cannot be called from external Python code. By default, they act like standard Python functions and hold the \href{https://wiki.python.org/moin/GlobalInterpreterLock}{GIL}\footnote{The Global Interpreter Lock is a Python feature which was introduced to eliminate race conditions in parallel operations on objects, Python needs it because objects are tracked by the Garbage collector by keeping count of the references of said object when the references reach 0 then the garbage collector frees memory, if there are parallel operations on the same object this could lead to an early free inducing a use after free, or race conditions, we resolve this by using the GIL which makes each operation on objects one thread only thus preventing the majority of problems from arising.}, allowing access to Python objects. However, if defined with \texttt{nogil} (e.g., \texttt{cdef void func() nogil:}), they release the GIL; in this mode, Python structures cannot be accessed.
+  \item \textbf{cdef}: Defines a C-only function. These are very fast but cannot be called from external Python code. By default, they act like standard Python functions and hold the GIL\footnote{The Global Interpreter Lock is a Python feature which was introduced to eliminate race conditions in parallel operations on objects, Python needs it because objects are tracked by the Garbage collector by keeping count of the references of said object when the references reach 0 then the garbage collector frees memory, if there are parallel operations on the same object this could lead to an early free inducing a use after free, or race conditions, we resolve this by using the GIL which makes each operation on objects one thread only thus preventing the majority of problems from arising. \url{https://wiki.python.org/moin/GlobalInterpreterLock}}, allowing access to Python objects. However, if defined with \texttt{nogil} (e.g., \texttt{cdef void func() nogil:}), they release the GIL; in this mode, Python structures cannot be accessed.
     
     \item \textbf{cpdef}: Creates two versions of the function: a C version for use within Cython and a Python wrapper for external use. This offers the best of both worlds but introduces slight overhead compared to pure \texttt{cdef}.
     
@@ -421,20 +423,19 @@ This distinction allows us to write performance-critical loops/operations in \te
 \subsection{Compilation and Distribution}
 Cython's compiler will output .whl files that then can be imported into Python files like normal.
 The problem is that it can be burdensome to compile for every Python Version Header with only the Cython compiler.
-Therefore we opted to use \href{https://github.com/pypa/cibuildwheel}{cibuildwheel} which when integrated with Github's  CI/CD this facilitates software distribution.
+Therefore we opted to use cibuildwheel\footnote{\url{https://github.com/pypa/cibuildwheel}} which when integrated with Github's  CI/CD this facilitates software distribution.
 
 \subsection{Heap-item}
 \label{heapitem}
-The first proposed solution was to build a \href{https://github.com/BobTheBot988/heap-item}{heap-item} custom module written in Cython thus maximizing performance and compatibility with Python.
-A significant limitation of this approach is that, similar to the pure Python implementation, each heap item remains a distinct object managed by the garbage collector., each heap item is an object that must be tracked by python's \href{https://docs.python.org/3/library/gc.html}{garbage collector}, nevertheless this approach helped us reduce memory consumption by $\sim59.79\%$ instead of the pure python approach as seen in Figure \ref{fig:1}, however further optimization was necessary, so we opted for a custom heap called \href{https://github.com/BobTheBot988/heapcy/tree/main}{heapcy}.
+The first proposed solution was to build a heap-item\footnote{\url{https://github.com/BobTheBot988/heap-item}} custom module written in Cython thus maximizing performance and compatibility with Python.
+A significant limitation of this approach is that, similar to the pure Python implementation, each heap item remains a distinct object managed by the garbage collector., each heap item is an object that must be tracked by python's garbage collector\footnote{\url{https://docs.python.org/3/library/gc.html}}, nevertheless this approach helped us reduce memory consumption by $\sim59.79\%$ instead of the pure python approach as seen in Figure \ref{fig:1}, however further optimization was necessary, so we opted for a custom heap called heapcy\footnote{\url{https://github.com/BobTheBot988/heapcy/tree/main}}.
 
 Using Cython allows us to replace Python objects with C-structured
-objects giving us improved memory usage while also giving us ease of integration in Python, we could have used C++ and then have written the integrations with \href{https://nanobind.readthedocs.io/en/latest/}{nanobind}, but that would have taken considerably more time and the fast software distribution would have been more complicated.
-Since we use Cython we have access to \href{https://github.com/pypa/cibuildwheel}{cibuildwheel} which when integrated with github CI/CD allows us to publish binaries to PyPi rendering software distribution really easy.
+objects giving us improved memory usage while also giving us ease of integration in Python, we could have used C++ and then have written the integrations with nanobind\footnote{\url{https://nanobind.readthedocs.io/en/latest/}}, but that would have taken considerably more time and the fast software distribution would have been more complicated.
 These Cython objects:
 \begin{itemize}
-  \item are allocated in contiguous memory,
-  \item avoid Python reference counting,
+  %\item are allocated in contiguous memory,
+  %\item avoid Python reference counting,
   \item do not trigger garbage collection,
   \item store fields compactly (the struct is made using chars and doubles which is much smaller than normal python strings, and floats)
 \end{itemize}
@@ -471,13 +472,13 @@ The tradeoff is increased implementation complexity and the need for careful
 file handling, but the performance benefit is decisive.
 \section{Monte Carlo Implementation}
 \subsection{IID sampling problems and solution}
- The sampling used in the MAYA implementation was not IID because it had a thresholds for the low probability passwords, 
+ The sampling used in the MAYA implementation was not IID because it had a threshold for the low probability passwords,
  therefore Since Monte Carlo estimation requires a huge number of calculations, doing them one by one would be too slow. Therefore, we implemented a custom batched sampler using PyTorch. This allows us to use the GPU to process thousands of samples at the same time. This approach makes the estimation much faster compared to a standard iterative approach on the CPU.
 
 \chapter{Experimental Setup}
 \label{chap:5}
 \section{Dataset}
-For this paper we chose the \href{https://drive.google.com/file/d/1XEsAf99H3DmH4ichbH-4yXkb0mSwoADY/view?usp=sharing}{RockYou} dataset the same as in MAYA \cite{ref:maya}(split 80;20), for time reasons we couldn't test with other datasets.
+For this paper we chose the RockYou\footnote{\url{https://drive.google.com/file/d/1XEsAf99H3DmH4ichbH-4yXkb0mSwoADY/view?usp=sharing}} dataset the same as in MAYA \cite{ref:maya}(split 80;20), for time reasons we couldn't test with other datasets.
 RockYou is the standard dataset used in nearly all password-guessing literature.
 Using it ensures comparability with previous work and aligns with the datasets
 used by MAYA and FLA. Its size and structure also provide statistically meaningful
@@ -518,7 +519,7 @@ To do this we need 1 set:
 % The former approach was very slow, we needed to find another way to reach a good enough solution.
 
 \subsection{Estimation with Monte Carlo}
-We employ a Monte Carlo estimate \eqref{eq:rhat} to get a result similar to  \eqref{eq:1}.
+We employ a Monte Carlo estimate \eqref{eq:rhat} to get a result similar to  \eqref{eq:realrank}.
 $\hat{R}$, represents the estimate of the rank (number of times the model needs to guess\footnote{As defined in \cite{ref:dellamico}}) to generate the password.
 
 Thanks to this we require much less effort compared to the deterministic way, since all we need to do is to compute the Monte Carlo curve  once per Model Checkpoint, save it to .csv file and then for each guess number apply the formula above and we will have our results significantly faster than the previous approach.
@@ -599,8 +600,8 @@ Finally, for the plots, we use \texttt{ComputeCrackRates}. We define some guessi
 \chapter{Results and Analysis}
 \label{chap:6}
 \section{Optimizing FLA}
-  We can see that our optimization work perfectly in the sense that   "fiat iustitia et pereat mundus" %complete
-     \begin{figure}[h!]
+As seen in Figure~\ref{fig:1}, the optimizations are substantial. These gains in memory usage will let us generate larger top-k samples, allowing us to evaluate Monte Carlo Precision for even larger numbers. Furthermore, these benefits are not limited to \textbf{FLA} and are easily extended to any model using the same generation schema.
+\begin{figure}[h!]
      \centering
         \renewcommand{\thefigure}{\arabic{figure}} % Removes the chapter prefix (e.g., "5.")
     \setcounter{figure}{0}      
@@ -625,12 +626,10 @@ Finally, for the plots, we use \texttt{ComputeCrackRates}. We define some guessi
     \caption{Size occupied in MB for $10^x$  amount of items by each implementation, this tells us how good the optimizations are instead of the old implementation}
     \label{tab:1}
 \end{table}
-As can be seen the gains have the same rate at any amount of items, so by using 10x the amount of items we will have 10x the amount of memory used.
-
+\FloatBarrier
 
 \section{Evaluating Monte Carlo}
-
-\begin{figure}[h!tbp]
+From the results shown in Table~\ref{tab:2}, we found that Monte Carlo, when used for guess number estimation, continues to be highly precise after $10^7$ ~\cite{ref:fla} even with $\Theta$ sizes as low as $10^3$. This may signify that it could be used for any model as a substitute for deterministic evaluation, rendering the process much faster and more efficient. However, the problem of single password rank estimation remains~\cite{ref:stanek}.\begin{figure}[h!tbp]
 \begin{subfigure}[b]{0.32\textwidth}
      \centering
      \includegraphics[width=\textwidth]{img/guess_pcg_10.png}
@@ -803,6 +802,7 @@ Even though we have this improvement over the base model, this is still not perf
 LSTMs are particularly effective for password modeling  because they capture long-range dependencies better than normal RNNs or simple Markov Chain Models.
 
 \section{Brute Force}
+\label{bruteforce}
 Brute forcing is a procedure in which we try every possible password to find the correct one e.g.  "What is Roberto Di Rosa's Gmail password?" \\ 
 Let us assume he used only characters from the english alphabet and that the password has a maximum length of 12 characters, so we know that there are 26 characters in the english alphabet let's start by the first:
  \begin{enumerate}
@@ -832,3 +832,4 @@ $26^{ 12 } \sim 95.43$ quadrillions times, which for any pc is very computationa
 \bibliography{refs}
 
 \end{document}
+
